@@ -54,12 +54,25 @@ app.get('/cartes/:id', (req, res) => {
 
 // Ajouter une carte
 app.post('/cartes', (req, res) => {
-  const { nom, jeu, extension, numero, rarete, etat, quantite, valeur_estimee, image_url } = req.body;
+  const { nom, jeu, extension, numero, rarete, etat, quantite, valeur_estimee, image_url, foil } = req.body;
+  const foilValue = foil ? 1 : 0;
+
+  const existante = db.prepare(`
+    SELECT * FROM cartes
+    WHERE nom = ? AND jeu = ? AND extension = ? AND numero = ? AND foil = ?
+  `).get(nom, jeu, extension, numero, foilValue);
+
+  if (existante) {
+    db.prepare('UPDATE cartes SET quantite = quantite + ? WHERE id = ?')
+      .run(Number(quantite), existante.id);
+    return res.json({ id: existante.id, message: 'Quantité mise à jour' });
+  }
+
   const stmt = db.prepare(`
-    INSERT INTO cartes (nom, jeu, extension, numero, rarete, etat, quantite, valeur_estimee, image_url)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO cartes (nom, jeu, extension, numero, rarete, etat, quantite, valeur_estimee, image_url, foil)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  const result = stmt.run(nom, jeu, extension, numero, rarete, etat ?? null, quantite, valeur_estimee ?? null, image_url ?? null);
+  const result = stmt.run(nom, jeu, extension, numero, rarete, etat ?? null, quantite, valeur_estimee ?? null, image_url ?? null, foilValue);
   res.status(201).json({ id: Number(result.lastInsertRowid) });
 });
 

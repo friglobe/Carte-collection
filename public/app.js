@@ -11,7 +11,7 @@ async function chargerCartes() {
         div.innerHTML = `
             <h3>${carte.nom}</h3>
             <p>${carte.jeu} - ${carte.extension || '?'}</p>
-            <p>Rareté: ${carte.rarete || '?'} | Quantité: ${carte.quantite}</p>
+            <p>Rareté: ${carte.rarete || '?'} | Quantité: ${carte.quantite} ${carte.foil ? '✨ Foil' : ''}</p>
             <button class="btn-supprimer">Supprimer</button>
             `;
 
@@ -23,7 +23,6 @@ async function chargerCartes() {
         conteneur.appendChild(div);
     });
 }
-chargerCartes();
 chargerCartes();
 
 document.getElementById('btn-recherche').addEventListener('click', async () => {
@@ -47,10 +46,12 @@ document.getElementById('btn-recherche').addEventListener('click', async () => {
             const quantite = prompt(`Combien d'exemplaires de "${carte.nom}" veux-tu ajouter ?`, '1');
             if (quantite === null) return;
 
+            const estFoil = confirm(`Est-ce une version foil (brillante) de "${carte.nom}" ?`);
+
             await fetch('/cartes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...carte, quantite })
+                body: JSON.stringify({ ...carte, quantite, foil: estFoil })
             });
 
             conteneur.innerHTML = '';

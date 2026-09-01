@@ -13,5 +13,9 @@ db.exec(`
     image_url TEXT
   );
 `);
-
+try {
+  db.exec('ALTER TABLE cartes ADD COLUMN foil INTEGER DEFAULT 0');
+} catch (erreur) {
+  // La colonne existe déjà (si le serveur a déjà tourné avant), on ignore l'erreur
+}
 module.exports = db;
