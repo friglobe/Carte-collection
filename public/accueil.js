@@ -1,6 +1,15 @@
 async function chargerTableauDeBord() {
-    const reponse = await fetch('/cartes');
-    const cartes = await reponse.json();
+    const [reponseCartes, reponseExtensions] = await Promise.all([
+        fetch('/cartes'),
+        fetch('/extensions?tous=1')
+    ]);
+    const cartes = await reponseCartes.json();
+    const extensions = await reponseExtensions.json();
+
+    const totalParExtension = {};
+    extensions.forEach(extension => {
+        totalParExtension[extension.nom] = extension.total;
+    });
 
     const conteneur = document.getElementById('stats-dashboard');
 
@@ -64,7 +73,11 @@ async function chargerTableauDeBord() {
             <div class="repartition-extensions">
                 <h3>Répartition par extension</h3>
                 <ul>
-                    ${extensionsTriees.map(([nom, quantite]) => `<li><span>${nom}</span><span>${quantite}</span></li>`).join('')}
+                    ${extensionsTriees.map(([nom, quantite]) => {
+                        const total = totalParExtension[nom];
+                        const affichage = total ? `${quantite} / ${total}` : `${quantite}`;
+                        return `<li><span>${nom}</span><span>${affichage}</span></li>`;
+                    }).join('')}
                 </ul>
             </div>
         </div>

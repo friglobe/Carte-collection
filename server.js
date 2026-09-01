@@ -56,12 +56,17 @@ app.get('/extensions', async (req, res) => {
   });
   const resultat = await reponse.json();
 
-  const extensions = resultat.data
-    .filter(set => set.set_type === 'expansion' || set.set_type === 'core')
-    .map(set => ({ code: set.code, nom: set.name, icone: set.icon_svg_uri }))
+  let extensions = resultat.data;
+
+  if (!req.query.tous) {
+    extensions = extensions.filter(set => set.set_type === 'expansion' || set.set_type === 'core');
+  }
+
+  const extensionsSimplifiees = extensions
+    .map(set => ({ code: set.code, nom: set.name, icone: set.icon_svg_uri, total: set.card_count }))
     .sort((a, b) => a.nom.localeCompare(b.nom));
 
-  res.json(extensions);
+  res.json(extensionsSimplifiees);
 });
 // Lister toutes les cartes
 app.get('/cartes', (req, res) => {
