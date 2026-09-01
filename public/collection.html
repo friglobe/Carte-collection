@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ma collection de cartes</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <header>
         <h1>🃏 Ma collection de cartes</h1>
@@ -34,7 +36,28 @@
     </section>
     <p id="stats-collection"></p>
     <div id="liste-cartes"></div>
+    <div id="modal-ajout-carte" class="modal-overlay" hidden>
+        <div class="modal-contenu">
+            <button id="modal-fermer" class="modal-fermer" type="button">&times;</button>
+            <img id="modal-image" src="" alt="">
+            <h3 id="modal-nom"></h3>
+            <p id="modal-info"></p>
+
+            <label for="modal-quantite">Quantité</label>
+            <input type="number" id="modal-quantite" min="1" value="1">
+
+            <button type="button" id="modal-foil-toggle" class="toggle-carte" data-foil="false">
+                <span class="toggle-texte">Normal</span>
+                <span class="toggle-knob"></span>
+            </button>
+
+            <p id="modal-prix"></p>
+
+            <button id="modal-confirmer" type="button">Ajouter à ma collection</button>
+        </div>
+    </div>
     <script src="auth.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>

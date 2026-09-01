@@ -1,6 +1,7 @@
 let toutesLesCartes = [];
 let toutesLesExtensions = [];
 let totalParExtension = {};
+let carteSelectionnee = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const connecte = await verifierConnexion();
@@ -19,6 +20,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('filtre-extension').addEventListener('change', (e) => {
     afficherCartes(toutesLesCartes, e.target.value);
   });
+
+  document.getElementById('modal-fermer').addEventListener('click', fermerModal);
+  document.getElementById('modal-confirmer').addEventListener('click', confirmerAjoutCarte);
+  document.getElementById('modal-foil-toggle').addEventListener('click', basculerFoil);
 
   chargerCartes();
   chargerExtensions();
@@ -130,26 +135,74 @@ async function rechercherParExtension(code) {
   `).join('');
 
   document.querySelectorAll('.resultat-carte').forEach(div => {
-    div.addEventListener('click', async () => {
-      const carte = cartes[div.dataset.index];
-      const quantite = prompt(`Quantité pour "${carte.nom}" ?`, '1');
-      if (!quantite) return;
-      const estFoil = confirm('Est-ce une version Foil ?');
-      const valeurEstimee = estFoil ? carte.prix_eur_foil : carte.prix_eur;
-
-      await fetch('/cartes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...carte,
-          quantite: Number(quantite),
-          foil: estFoil,
-          valeur_estimee: valeurEstimee
-        })
-      });
-
-      alert('Carte ajoutée à la collection !');
-      chargerCartes();
+    div.addEventListener('click', () => {
+      ouvrirModalAjout(cartes[div.dataset.index]);
     });
   });
+}
+
+function ouvrirModalAjout(carte) {
+  carteSelectionnee = carte;
+
+  const image = document.getElementById('modal-image');
+  image.src = carte.image_url || '';
+  image.hidden = !carte.image_url;
+
+  document.getElementById('modal-nom').textContent = carte.nom;
+  document.getElementById('modal-info').textContent = `${carte.extension} - #${carte.numero} - ${carte.rarete || '?'}`;
+  document.getElementById('modal-quantite').value = 1;
+
+  const toggle = document.getElementById('modal-foil-toggle');
+  toggle.dataset.foil = 'false';
+  toggle.querySelector('.toggle-texte').textContent = 'Normal';
+
+  mettreAJourPrixModal();
+
+  document.getElementById('modal-ajout-carte').hidden = false;
+}
+
+function fermerModal() {
+  document.getElementById('modal-ajout-carte').hidden = true;
+  carteSelectionnee = null;
+}
+
+function basculerFoil() {
+  const bouton = document.getElementById('modal-foil-toggle');
+  const estFoilActuellement = bouton.dataset.foil === 'true';
+  const nouvelEtat = !estFoilActuellement;
+
+  bouton.dataset.foil = nouvelEtat;
+  bouton.querySelector('.toggle-texte').textContent = nouvelEtat ? 'Foil' : 'Normal';
+
+  mettreAJourPrixModal();
+}
+
+function mettreAJourPrixModal() {
+  if (!carteSelectionnee) return;
+  const estFoil = document.getElementById('modal-foil-toggle').dataset.foil === 'true';
+  const prix = estFoil ? carteSelectionnee.prix_eur_foil : carteSelectionnee.prix_eur;
+  document.getElementById('modal-prix').textContent = prix ? `Prix estimé : ${prix} €` : 'Prix estimé : ?';
+}
+
+async function confirmerAjoutCarte() {
+  if (!carteSelectionnee) return;
+  const quantite = Number(document.getElementById('modal-quantite').value);
+  if (!quantite || quantite < 1) return;
+
+  const estFoil = document.getElementById('modal-foil-toggle').dataset.foil === 'true';
+  const valeurEstimee = estFoil ? carteSelectionnee.prix_eur_foil : carteSelectionnee.prix_eur;
+
+  await fetch('/cartes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...carteSelectionnee,
+      quantite,
+      foil: estFoil,
+      valeur_estimee: valeurEstimee
+    })
+  });
+
+  fermerModal();
+  chargerCartes();
 }

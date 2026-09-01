@@ -433,3 +433,137 @@ nav a:hover {
   border-color: var(--danger);
   color: white;
 }
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+.modal-contenu {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 320px;
+  width: 90%;
+  text-align: center;
+  position: relative;
+}
+
+.modal-fermer {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-light);
+}
+
+.modal-contenu img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.modal-contenu label {
+  display: block;
+  margin-top: 12px;
+  font-size: 0.9rem;
+  color: var(--text-light);
+  text-align: left;
+}
+
+.modal-contenu input[type="number"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 1rem;
+  margin-top: 4px;
+  box-sizing: border-box;
+}
+
+.toggle-carte {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 160px;
+  height: 44px;
+  margin: 16px auto 0;
+  border-radius: 999px;
+  border: none;
+  background: var(--border);
+  cursor: pointer;
+  padding: 4px;
+  font-family: inherit;
+  transition: background 0.2s ease;
+}
+
+.toggle-carte .toggle-texte {
+  flex: 1;
+  text-align: center;
+  pointer-events: none;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-light);
+}
+
+.toggle-carte .toggle-knob {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary);
+  transition: left 0.2s ease, background 0.2s ease;
+}
+
+.toggle-carte[data-foil="true"] {
+  background: #2a2a3d;
+}
+
+.toggle-carte[data-foil="true"] .toggle-texte {
+  color: white;
+}
+
+.toggle-carte[data-foil="true"] .toggle-knob {
+  left: calc(100% - 40px);
+  background: linear-gradient(135deg, #a78bfa, #34d399, #60a5fa);
+}
+
+#modal-prix {
+  margin-top: 12px;
+  font-weight: 600;
+}
+
+#modal-confirmer {
+  margin-top: 16px;
+  width: 100%;
+  padding: 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#modal-confirmer:hover {
+  background: var(--primary-dark);
+}
