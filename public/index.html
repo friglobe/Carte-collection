@@ -1,34 +1,22 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ma collection de cartes</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
     <header>
         <h1>🃏 Ma collection de cartes</h1>
+        <nav>
+            <a href="index.html" class="actif">Accueil</a>
+            <a href="collection.html">Ma collection</a>
+        </nav>
     </header>
 
-    <section id="recherche">
-        <input type="text" id="recherche-extension-filtre" placeholder="Filtrer les extensions...">
-    </section>
-    <div id="extensions-vignettes"></div>
-    <div id="resultats-recherche"></div>
+    <div id="stats-dashboard"></div>
 
-    <section id="entete-collection">
-        <h2>Ma collection</h2>
-        <select id="filtre-extension">
-            <option value="">Toutes les extensions</option>
-        </select>
-    </section>
-    <p id="stats-collection"></p>
-    <div id="liste-cartes"></div>
-
-    <script src="app.js"></script>
+    <script src="accueil.js"></script>
 </body>
-
 </html>

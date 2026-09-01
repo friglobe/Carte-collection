@@ -217,3 +217,92 @@ header h1 {
   line-height: 1.2;
   color: var(--text-light);
 }
+nav {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+nav a {
+  text-decoration: none;
+  color: var(--text-light);
+  font-weight: 600;
+  padding: 6px 4px;
+  border-bottom: 2px solid transparent;
+}
+
+nav a.actif,
+nav a:hover {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.cartes-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.stat-tuile {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.stat-valeur {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0 0 4px;
+}
+
+.stat-label {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+.dashboard-colonnes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 30px;
+}
+
+.carte-mise-en-avant,
+.repartition-extensions {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.carte-mise-en-avant img {
+  width: 140px;
+  border-radius: 8px;
+  margin: 10px 0;
+}
+
+.repartition-extensions ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+
+.repartition-extensions li {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+@media (max-width: 700px) {
+  .dashboard-colonnes {
+    grid-template-columns: 1fr;
+  }
+}
