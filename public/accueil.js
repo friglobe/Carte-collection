@@ -1,86 +1,72 @@
+document.addEventListener('DOMContentLoaded', async () => {
+  const connecte = await verifierConnexion();
+  if (!connecte) return;
+  initialiserDeconnexion();
+  chargerTableauDeBord();
+});
+
 async function chargerTableauDeBord() {
-    const [reponseCartes, reponseExtensions] = await Promise.all([
-        fetch('/cartes'),
-        fetch('/extensions?tous=1')
-    ]);
-    const cartes = await reponseCartes.json();
-    const extensions = await reponseExtensions.json();
+  const [reponseCartes, reponseExtensions] = await Promise.all([
+    fetch('/cartes'),
+    fetch('/extensions?tous=1')
+  ]);
+  const cartes = await reponseCartes.json();
+  const extensions = await reponseExtensions.json();
 
-    const totalParExtension = {};
-    extensions.forEach(extension => {
-        totalParExtension[extension.nom] = extension.total;
-    });
+  const totalParExtension = {};
+  extensions.forEach(ext => {
+    totalParExtension[ext.nom] = ext.total;
+  });
 
-    const conteneur = document.getElementById('stats-dashboard');
+  const valeurTotale = cartes.reduce((somme, c) => somme + (c.valeur_estimee || 0) * c.quantite, 0);
+  const nombreExemplaires = cartes.reduce((somme, c) => somme + c.quantite, 0);
+  const nombreFoil = cartes.filter(c => c.foil).reduce((somme, c) => somme + c.quantite, 0);
 
-    if (cartes.length === 0) {
-        conteneur.innerHTML = '<p>Ta collection est vide pour le moment. Va sur "Ma collection" pour ajouter des cartes !</p>';
-        return;
+  const parExtension = {};
+  cartes.forEach(carte => {
+    if (!parExtension[carte.extension]) parExtension[carte.extension] = 0;
+    parExtension[carte.extension] += carte.quantite;
+  });
+
+  let carteLaPlusChere = null;
+  cartes.forEach(carte => {
+    if (carte.valeur_estimee && (!carteLaPlusChere || carte.valeur_estimee > carteLaPlusChere.valeur_estimee)) {
+      carteLaPlusChere = carte;
     }
+  });
 
-    let valeurTotale = 0;
-    let nombreExemplaires = 0;
-    let nombreFoil = 0;
-    const parExtension = {};
-    let carteLaPlusChere = null;
+  const conteneur = document.getElementById('stats-dashboard');
 
-    cartes.forEach(carte => {
-        valeurTotale += (carte.valeur_estimee || 0) * carte.quantite;
-        nombreExemplaires += carte.quantite;
+  const tuiles = `
+    <div class="cartes-stats">
+      <div class="stat-tuile"><span>${cartes.length}</span><p>Cartes différentes</p></div>
+      <div class="stat-tuile"><span>${nombreExemplaires}</span><p>Exemplaires au total</p></div>
+      <div class="stat-tuile"><span>${nombreFoil}</span><p>Exemplaires Foil</p></div>
+      <div class="stat-tuile"><span>${valeurTotale.toFixed(2)} €</span><p>Valeur estimée</p></div>
+    </div>
+  `;
 
-        if (carte.foil) {
-            nombreFoil += carte.quantite;
-        }
+  const carteMiseEnAvant = carteLaPlusChere ? `
+    <div class="carte-mise-en-avant">
+      <h3>Carte la plus chère</h3>
+      ${carteLaPlusChere.image_url ? `<img src="${carteLaPlusChere.image_url}" alt="${carteLaPlusChere.nom}">` : ''}
+      <p>${carteLaPlusChere.nom} - ${carteLaPlusChere.valeur_estimee.toFixed(2)} €</p>
+    </div>
+  ` : '';
 
-        const extension = carte.extension || 'Extension inconnue';
-        parExtension[extension] = (parExtension[extension] || 0) + carte.quantite;
+  const repartition = `
+    <div class="repartition-extensions">
+      <h3>Répartition par extension</h3>
+      <ul>
+        ${Object.entries(parExtension)
+          .sort((a, b) => b[1] - a[1])
+          .map(([extension, quantite]) => {
+            const total = totalParExtension[extension];
+            return `<li>${extension} : ${quantite}${total ? ' / ' + total : ''}</li>`;
+          }).join('')}
+      </ul>
+    </div>
+  `;
 
-        if (!carteLaPlusChere || (carte.valeur_estimee || 0) > (carteLaPlusChere.valeur_estimee || 0)) {
-            carteLaPlusChere = carte;
-        }
-    });
-
-    const extensionsTriees = Object.entries(parExtension).sort((a, b) => b[1] - a[1]);
-
-    conteneur.innerHTML = `
-        <div class="cartes-stats">
-            <div class="stat-tuile">
-                <p class="stat-valeur">${cartes.length}</p>
-                <p class="stat-label">Cartes différentes</p>
-            </div>
-            <div class="stat-tuile">
-                <p class="stat-valeur">${nombreExemplaires}</p>
-                <p class="stat-label">Exemplaires au total</p>
-            </div>
-            <div class="stat-tuile">
-                <p class="stat-valeur">${valeurTotale.toFixed(2)} €</p>
-                <p class="stat-label">Valeur estimée</p>
-            </div>
-            <div class="stat-tuile">
-                <p class="stat-valeur">✨ ${nombreFoil}</p>
-                <p class="stat-label">Exemplaires foil</p>
-            </div>
-        </div>
-
-        <div class="dashboard-colonnes">
-            <div class="carte-mise-en-avant">
-                <h3>Carte la plus chère</h3>
-                ${carteLaPlusChere.image_url ? `<img src="${carteLaPlusChere.image_url}" alt="${carteLaPlusChere.nom}">` : ''}
-                <p><strong>${carteLaPlusChere.nom}</strong></p>
-                <p>${(carteLaPlusChere.valeur_estimee || 0).toFixed(2)} € / unité</p>
-            </div>
-
-            <div class="repartition-extensions">
-                <h3>Répartition par extension</h3>
-                <ul>
-                    ${extensionsTriees.map(([nom, quantite]) => {
-                        const total = totalParExtension[nom];
-                        const affichage = total ? `${quantite} / ${total}` : `${quantite}`;
-                        return `<li><span>${nom}</span><span>${affichage}</span></li>`;
-                    }).join('')}
-                </ul>
-            </div>
-        </div>
-    `;
+  conteneur.innerHTML = `${tuiles}<div class="dashboard-colonnes">${carteMiseEnAvant}${repartition}</div>`;
 }
-chargerTableauDeBord();

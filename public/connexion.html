@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Connexion - Ma Collection de Cartes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="conteneur-connexion">
+    <h1>🎴 Ma Collection de Cartes</h1>
+
+    <div class="onglets-connexion">
+      <button id="onglet-connexion" class="onglet actif" type="button">Se connecter</button>
+      <button id="onglet-inscription" class="onglet" type="button">Créer un compte</button>
+    </div>
+
+    <form id="form-connexion" class="formulaire-connexion">
+      <label for="connexion-nom">Nom d'utilisateur</label>
+      <input type="text" id="connexion-nom" name="nom_utilisateur" required>
+
+      <label for="connexion-mdp">Mot de passe</label>
+      <input type="password" id="connexion-mdp" name="mot_de_passe" required>
+
+      <button type="submit">Se connecter</button>
+    </form>
+
+    <form id="form-inscription" class="formulaire-connexion" hidden>
+      <label for="inscription-nom">Nom d'utilisateur</label>
+      <input type="text" id="inscription-nom" name="nom_utilisateur" required>
+
+      <label for="inscription-mdp">Mot de passe</label>
+      <input type="password" id="inscription-mdp" name="mot_de_passe" required>
+
+      <button type="submit">Créer mon compte</button>
+    </form>
+
+    <p id="message-connexion" class="message-erreur"></p>
+  </div>
+
+  <script src="connexion.js"></script>
+</body>
+</html>

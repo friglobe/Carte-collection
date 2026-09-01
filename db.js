@@ -13,9 +13,21 @@ db.exec(`
     image_url TEXT
   );
 `);
+
 try {
   db.exec('ALTER TABLE cartes ADD COLUMN foil INTEGER DEFAULT 0');
-} catch (erreur) {
-  // La colonne existe déjà (si le serveur a déjà tourné avant), on ignore l'erreur
-}
+} catch (erreur) {}
+
+try {
+  db.exec('ALTER TABLE cartes ADD COLUMN user_id INTEGER');
+} catch (erreur) {}
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nom_utilisateur TEXT UNIQUE NOT NULL,
+    mot_de_passe_hash TEXT NOT NULL
+  );
+`);
+
 module.exports = db;

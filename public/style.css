@@ -337,3 +337,99 @@ nav a:hover {
 #btn-toggle-recherche:active {
   transform: translateY(0);
 }
+.conteneur-connexion {
+  max-width: 400px;
+  margin: 80px auto;
+  padding: 32px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.onglets-connexion {
+  display: flex;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.onglet {
+  flex: 1;
+  padding: 12px;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--text-light);
+  border-bottom: 2px solid transparent;
+}
+
+.onglet.actif {
+  color: var(--primary);
+  border-bottom: 2px solid var(--primary);
+  font-weight: 600;
+}
+
+.formulaire-connexion {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.formulaire-connexion[hidden] {
+  display: none;
+}
+
+.formulaire-connexion label {
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+.formulaire-connexion input {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.formulaire-connexion button[type="submit"] {
+  margin-top: 8px;
+  padding: 12px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.formulaire-connexion button[type="submit"]:hover {
+  background: var(--primary-dark);
+}
+
+.message-erreur {
+  margin-top: 16px;
+  color: var(--danger);
+  min-height: 1.2em;
+}
+
+#btn-deconnexion {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+#btn-deconnexion:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: white;
+}

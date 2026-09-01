@@ -20,6 +20,8 @@
   },
   "homepage": "https://github.com/friglobe/Carte-collection#readme",
   "dependencies": {
-    "express": "^5.2.1"
+    "bcryptjs": "^3.0.3",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0"
   }
 }
