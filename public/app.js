@@ -1,11 +1,55 @@
+let toutesLesCartes = [];
+let toutesLesExtensions = [];
+
+// --- Affichage de la collection ---
+
 async function chargerCartes() {
     const reponse = await fetch('/cartes');
-    const cartes = await reponse.json();
+    toutesLesCartes = await reponse.json();
 
+    remplirFiltreExtensions();
+    afficherCartes(toutesLesCartes);
+}
+chargerCartes();
+
+function remplirFiltreExtensions() {
+    const selecteur = document.getElementById('filtre-extension');
+    const extensionSelectionnee = selecteur.value;
+
+    const extensions = [...new Set(toutesLesCartes.map(carte => carte.extension).filter(Boolean))].sort();
+
+    selecteur.innerHTML = '<option value="">Toutes les extensions</option>';
+    extensions.forEach(extension => {
+        const option = document.createElement('option');
+        option.value = extension;
+        option.textContent = extension;
+        selecteur.appendChild(option);
+    });
+
+    selecteur.value = extensionSelectionnee;
+}
+
+document.getElementById('filtre-extension').addEventListener('change', (event) => {
+    const extensionChoisie = event.target.value;
+
+    const cartesFiltrees = extensionChoisie
+        ? toutesLesCartes.filter(carte => carte.extension === extensionChoisie)
+        : toutesLesCartes;
+
+    afficherCartes(cartesFiltrees);
+});
+
+function afficherCartes(cartes) {
     const conteneur = document.getElementById('liste-cartes');
     conteneur.innerHTML = '';
 
+    let valeurTotale = 0;
+    let nombreExemplaires = 0;
+
     cartes.forEach(carte => {
+        valeurTotale += (carte.valeur_estimee || 0) * carte.quantite;
+        nombreExemplaires += carte.quantite;
+
         const div = document.createElement('div');
         div.className = 'carte';
         div.innerHTML = `
@@ -13,6 +57,7 @@ async function chargerCartes() {
             <h3>${carte.nom}</h3>
             <p>${carte.jeu} - ${carte.extension || '?'}</p>
             <p>Rareté: ${carte.rarete || '?'} | Quantité: ${carte.quantite} ${carte.foil ? '✨ Foil' : ''}</p>
+            ${carte.valeur_estimee ? `<p class="prix">${carte.valeur_estimee.toFixed(2)} € / unité</p>` : ''}
             <button class="btn-supprimer">Supprimer</button>
             `;
 
@@ -23,14 +68,46 @@ async function chargerCartes() {
 
         conteneur.appendChild(div);
     });
+
+    document.getElementById('stats-collection').textContent =
+        `${cartes.length} carte(s) différente(s) • ${nombreExemplaires} exemplaire(s) • Valeur estimée : ${valeurTotale.toFixed(2)} €`;
 }
-chargerCartes();
 
-document.getElementById('btn-recherche').addEventListener('click', async () => {
-    const terme = document.getElementById('recherche-nom').value;
-    if (!terme) return;
+// --- Recherche par extension ---
 
-    const reponse = await fetch(`/cartes/recherche?nom=${encodeURIComponent(terme)}`);
+async function chargerExtensions() {
+    const reponse = await fetch('/extensions');
+    toutesLesExtensions = await reponse.json();
+    afficherVignettesExtensions(toutesLesExtensions);
+}
+chargerExtensions();
+
+function afficherVignettesExtensions(extensions) {
+    const conteneur = document.getElementById('extensions-vignettes');
+    conteneur.innerHTML = '';
+
+    extensions.forEach(extension => {
+        const div = document.createElement('div');
+        div.className = 'vignette-extension';
+        div.innerHTML = `
+            <img src="${extension.icone}" alt="${extension.nom}">
+            <p>${extension.nom}</p>
+        `;
+        div.addEventListener('click', () => rechercherParExtension(extension.code));
+        conteneur.appendChild(div);
+    });
+}
+
+document.getElementById('recherche-extension-filtre').addEventListener('input', (event) => {
+    const texteRecherche = event.target.value.toLowerCase();
+    const extensionsFiltrees = toutesLesExtensions.filter(extension =>
+        extension.nom.toLowerCase().includes(texteRecherche)
+    );
+    afficherVignettesExtensions(extensionsFiltrees);
+});
+
+async function rechercherParExtension(code) {
+    const reponse = await fetch(`/cartes/recherche?extension=${code}`);
     const resultats = await reponse.json();
 
     const conteneur = document.getElementById('resultats-recherche');
@@ -48,17 +125,17 @@ document.getElementById('btn-recherche').addEventListener('click', async () => {
             if (quantite === null) return;
 
             const estFoil = confirm(`Est-ce une version foil (brillante) de "${carte.nom}" ?`);
+            const valeurEstimee = estFoil ? (carte.prix_eur_foil || carte.prix_eur) : carte.prix_eur;
 
             await fetch('/cartes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...carte, quantite, foil: estFoil })
+                body: JSON.stringify({ ...carte, quantite, foil: estFoil, valeur_estimee: valeurEstimee })
             });
 
             conteneur.innerHTML = '';
-            document.getElementById('recherche-nom').value = '';
             chargerCartes();
         });
         conteneur.appendChild(div);
     });
-});
+}

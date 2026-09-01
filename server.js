@@ -11,8 +11,17 @@ app.use(express.static('public'));
 // Rechercher des cartes Magic via Scryfall
 app.get('/cartes/recherche', async (req, res) => {
   const terme = req.query.nom;
+  const extension = req.query.extension;
 
-  const reponse = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(terme)}`, {
+  let requete = '';
+  if (terme) requete += terme;
+  if (extension) requete += (requete ? ' ' : '') + `e:${extension}`;
+
+  if (!requete) {
+    return res.json([]);
+  }
+
+  const reponse = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(requete)}`, {
     headers: {
       'User-Agent': 'CarteCollectionApp/1.0',
       'Accept': 'application/json'
@@ -31,12 +40,29 @@ app.get('/cartes/recherche', async (req, res) => {
     extension: carte.set_name,
     numero: carte.collector_number,
     rarete: carte.rarity,
-    image_url: carte.image_uris ? carte.image_uris.normal : null
+    image_url: carte.image_uris ? carte.image_uris.normal : null,
+    prix_eur: carte.prices ? parseFloat(carte.prices.eur) || null : null,
+    prix_eur_foil: carte.prices ? parseFloat(carte.prices.eur_foil) || null : null
   }));
 
   res.json(cartesSimplifiees);
 });
+app.get('/extensions', async (req, res) => {
+  const reponse = await fetch('https://api.scryfall.com/sets', {
+    headers: {
+      'User-Agent': 'CarteCollectionApp/1.0',
+      'Accept': 'application/json'
+    }
+  });
+  const resultat = await reponse.json();
 
+  const extensions = resultat.data
+    .filter(set => set.set_type === 'expansion' || set.set_type === 'core')
+    .map(set => ({ code: set.code, nom: set.name, icone: set.icon_svg_uri }))
+    .sort((a, b) => a.nom.localeCompare(b.nom));
+
+  res.json(extensions);
+});
 // Lister toutes les cartes
 app.get('/cartes', (req, res) => {
   const cartes = db.prepare('SELECT * FROM cartes').all();

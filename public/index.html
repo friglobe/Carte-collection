@@ -1,23 +1,34 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ma collection de cartes</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <h1>Ma collection de cartes</h1>
 
-    <div id="recherche">
-        <input type="text" id="recherche-nom" placeholder="Rechercher une carte Magic...">
-        <button id="btn-recherche">Rechercher</button>
-    </div>
+<body>
+    <header>
+        <h1>🃏 Ma collection de cartes</h1>
+    </header>
+
+    <section id="recherche">
+        <input type="text" id="recherche-extension-filtre" placeholder="Filtrer les extensions...">
+    </section>
+    <div id="extensions-vignettes"></div>
     <div id="resultats-recherche"></div>
 
-    <h2>Ma collection</h2>
+    <section id="entete-collection">
+        <h2>Ma collection</h2>
+        <select id="filtre-extension">
+            <option value="">Toutes les extensions</option>
+        </select>
+    </section>
+    <p id="stats-collection"></p>
     <div id="liste-cartes"></div>
 
     <script src="app.js"></script>
 </body>
+
 </html>
