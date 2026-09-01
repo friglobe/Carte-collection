@@ -15,11 +15,15 @@
         </nav>
     </header>
 
-    <section id="recherche">
-        <input type="text" id="recherche-extension-filtre" placeholder="Filtrer les extensions...">
-    </section>
-    <div id="extensions-vignettes"></div>
-    <div id="resultats-recherche"></div>
+    <button id="btn-toggle-recherche">🔍 Rechercher une carte</button>
+
+    <div id="zone-recherche" hidden>
+        <section id="recherche">
+            <input type="text" id="recherche-extension-filtre" placeholder="Filtrer les extensions...">
+        </section>
+        <div id="extensions-vignettes"></div>
+        <div id="resultats-recherche"></div>
+    </div>
 
     <section id="entete-collection">
         <h2>Ma collection</h2>

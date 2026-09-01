@@ -1,11 +1,34 @@
 let toutesLesCartes = [];
 let toutesLesExtensions = [];
+let totalParExtension = {};
 
+document.getElementById('btn-toggle-recherche').addEventListener('click', () => {
+    const zone = document.getElementById('zone-recherche');
+    zone.hidden = !zone.hidden;
+
+    const bouton = document.getElementById('btn-toggle-recherche');
+    bouton.textContent = zone.hidden ? '🔍 Rechercher une carte' : '✖ Fermer la recherche';
+});
+// Ouvre automatiquement la recherche si on arrive depuis le bouton de l'accueil
+const parametresUrl = new URLSearchParams(window.location.search);
+if (parametresUrl.get('recherche')) {
+    document.getElementById('zone-recherche').hidden = false;
+    document.getElementById('btn-toggle-recherche').textContent = '✖ Fermer la recherche';
+}
 // --- Affichage de la collection ---
 
 async function chargerCartes() {
-    const reponse = await fetch('/cartes');
-    toutesLesCartes = await reponse.json();
+    const [reponseCartes, reponseExtensions] = await Promise.all([
+        fetch('/cartes'),
+        fetch('/extensions?tous=1')
+    ]);
+    toutesLesCartes = await reponseCartes.json();
+    const extensions = await reponseExtensions.json();
+
+    totalParExtension = {};
+    extensions.forEach(extension => {
+        totalParExtension[extension.nom] = extension.total;
+    });
 
     remplirFiltreExtensions();
     afficherCartes(toutesLesCartes);
@@ -36,10 +59,10 @@ document.getElementById('filtre-extension').addEventListener('change', (event) =
         ? toutesLesCartes.filter(carte => carte.extension === extensionChoisie)
         : toutesLesCartes;
 
-    afficherCartes(cartesFiltrees);
+    afficherCartes(cartesFiltrees, extensionChoisie);
 });
 
-function afficherCartes(cartes) {
+function afficherCartes(cartes, extensionFiltree = '') {
     const conteneur = document.getElementById('liste-cartes');
     conteneur.innerHTML = '';
 
@@ -69,8 +92,13 @@ function afficherCartes(cartes) {
         conteneur.appendChild(div);
     });
 
-    document.getElementById('stats-collection').textContent =
-        `${cartes.length} carte(s) différente(s) • ${nombreExemplaires} exemplaire(s) • Valeur estimée : ${valeurTotale.toFixed(2)} €`;
+    let texteStats = `${cartes.length} carte(s) différente(s) • ${nombreExemplaires} exemplaire(s) • Valeur estimée : ${valeurTotale.toFixed(2)} €`;
+
+    if (extensionFiltree && totalParExtension[extensionFiltree]) {
+        texteStats += ` • ${nombreExemplaires} / ${totalParExtension[extensionFiltree]} cartes de l'extension possédées`;
+    }
+
+    document.getElementById('stats-collection').textContent = texteStats;
 }
 
 // --- Recherche par extension ---
