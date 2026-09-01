@@ -12,10 +12,18 @@ async function chargerCartes() {
             <h3>${carte.nom}</h3>
             <p>${carte.jeu} - ${carte.extension || '?'}</p>
             <p>Rareté: ${carte.rarete || '?'} | Quantité: ${carte.quantite}</p>
+            <button class="btn-supprimer">Supprimer</button>
             `;
+
+        div.querySelector('.btn-supprimer').addEventListener('click', async () => {
+            await fetch(`/cartes/${carte.id}`, { method: 'DELETE' });
+            chargerCartes();
+        });
+
         conteneur.appendChild(div);
     });
 }
+chargerCartes();
 chargerCartes();
 
 document.getElementById('btn-recherche').addEventListener('click', async () => {

@@ -33,3 +33,16 @@ body{
 .resultat-carte:hover {
   opacity: 0.7;
 }
+.btn-supprimer {
+  margin-top: 8px;
+  background: #d9534f;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-supprimer:hover {
+  background: #c9302c;
+}
