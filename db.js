@@ -8,7 +8,6 @@ db.exec(`
     extension TEXT,
     numero INTEGER,
     rarete TEXT,
-    etat TEXT,
     quantite INTEGER default 1,
     valeur_estimee REAL,
     image_url TEXT

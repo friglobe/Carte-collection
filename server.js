@@ -1,9 +1,41 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 const express = require('express');
 const db = require('./db');
 const app = express();
 const PORT = 3000;
 
 app.use(express.json());
+app.use(express.static('public'));
+
+// Rechercher des cartes Magic via Scryfall
+app.get('/cartes/recherche', async (req, res) => {
+  const terme = req.query.nom;
+
+  const reponse = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(terme)}`, {
+    headers: {
+      'User-Agent': 'CarteCollectionApp/1.0',
+      'Accept': 'application/json'
+    }
+  });
+
+  const resultat = await reponse.json();
+
+  if (!resultat.data) {
+    return res.json([]);
+  }
+
+  const cartesSimplifiees = resultat.data.map(carte => ({
+    nom: carte.name,
+    jeu: 'Magic',
+    extension: carte.set_name,
+    numero: carte.collector_number,
+    rarete: carte.rarity,
+    image_url: carte.image_uris ? carte.image_uris.normal : null
+  }));
+
+  res.json(cartesSimplifiees);
+});
 
 // Lister toutes les cartes
 app.get('/cartes', (req, res) => {
@@ -27,7 +59,7 @@ app.post('/cartes', (req, res) => {
     INSERT INTO cartes (nom, jeu, extension, numero, rarete, etat, quantite, valeur_estimee, image_url)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  const result = stmt.run(nom, jeu, extension, numero, rarete, etat, quantite, valeur_estimee, image_url);
+  const result = stmt.run(nom, jeu, extension, numero, rarete, etat ?? null, quantite, valeur_estimee ?? null, image_url ?? null);
   res.status(201).json({ id: Number(result.lastInsertRowid) });
 });
 
@@ -39,7 +71,7 @@ app.put('/cartes/:id', (req, res) => {
     SET nom = ?, jeu = ?, extension = ?, numero = ?, rarete = ?, etat = ?, quantite = ?, valeur_estimee = ?, image_url = ?
     WHERE id = ?
   `);
-  stmt.run(nom, jeu, extension, numero, rarete, etat, quantite, valeur_estimee, image_url, req.params.id);
+  stmt.run(nom, jeu, extension, numero, rarete, etat ?? null, quantite, valeur_estimee ?? null, image_url ?? null, req.params.id);
   res.json({ message: 'Carte mise à jour' });
 });
 

@@ -1,0 +1,35 @@
+body{
+    front-family:sans-serif;
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.carte{
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+#resultats-recherche {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.resultat-carte {
+  width: 120px;
+  cursor: pointer;
+  text-align: center;
+  font-size: 0.85em;
+}
+
+.resultat-carte img {
+  width: 100%;
+  border-radius: 6px;
+}
+
+.resultat-carte:hover {
+  opacity: 0.7;
+}
