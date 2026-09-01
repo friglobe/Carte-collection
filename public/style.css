@@ -46,3 +46,14 @@ body{
 .btn-supprimer:hover {
   background: #c9302c;
 }
+#liste-cartes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+}
+
+.carte img {
+  width: 100%;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}

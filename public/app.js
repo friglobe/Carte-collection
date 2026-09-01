@@ -9,6 +9,7 @@ async function chargerCartes() {
         const div = document.createElement('div');
         div.className = 'carte';
         div.innerHTML = `
+            ${carte.image_url ? `<img src="${carte.image_url}" alt="${carte.nom}">` : ''}
             <h3>${carte.nom}</h3>
             <p>${carte.jeu} - ${carte.extension || '?'}</p>
             <p>Rareté: ${carte.rarete || '?'} | Quantité: ${carte.quantite} ${carte.foil ? '✨ Foil' : ''}</p>
