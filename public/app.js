@@ -2,6 +2,7 @@ let toutesLesCartes = [];
 let toutesLesExtensions = [];
 let totalParExtension = {};
 let carteSelectionnee = null;
+let modeModification = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
   const connecte = await verifierConnexion();
@@ -22,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.getElementById('modal-fermer').addEventListener('click', fermerModal);
-  document.getElementById('modal-confirmer').addEventListener('click', confirmerAjoutCarte);
+  document.getElementById('modal-confirmer').addEventListener('click', confirmerModale);
   document.getElementById('modal-foil-toggle').addEventListener('click', basculerFoil);
 
   chargerCartes();
@@ -81,9 +82,19 @@ function afficherCartes(cartes, extensionFiltree = '') {
       <p>Rareté : ${carte.rarete || '?'}</p>
       <p>Quantité : ${carte.quantite}${carte.foil ? ' <span class="badge-foil">Foil</span>' : ''}</p>
       <p>Valeur estimée : ${carte.valeur_estimee ? carte.valeur_estimee.toFixed(2) + ' €' : '?'}</p>
-      <button class="btn-supprimer" data-id="${carte.id}">Supprimer</button>
+      <div class="actions-carte">
+        <button class="btn-modifier" data-id="${carte.id}">Modifier</button>
+        <button class="btn-supprimer" data-id="${carte.id}">Supprimer</button>
+      </div>
     </div>
   `).join('');
+
+  document.querySelectorAll('.btn-modifier').forEach(bouton => {
+    bouton.addEventListener('click', () => {
+      const carte = cartesAffichees.find(c => c.id === Number(bouton.dataset.id));
+      ouvrirModalModification(carte);
+    });
+  });
 
   document.querySelectorAll('.btn-supprimer').forEach(bouton => {
     bouton.addEventListener('click', async () => {
@@ -126,7 +137,7 @@ async function rechercherParExtension(code) {
   const conteneur = document.getElementById('resultats-recherche');
 
   conteneur.innerHTML = cartes.map((carte, index) => `
-        <div class="resultat-carte" data-index="${index}" data-rarete="${carte.rarete}">
+    <div class="resultat-carte" data-index="${index}" data-rarete="${carte.rarete}">
       ${carte.image_url ? `<img src="${carte.image_url}" alt="${carte.nom}">` : ''}
       <h4>${carte.nom}</h4>
       <p>#${carte.numero} - ${carte.rarete}</p>
@@ -143,6 +154,7 @@ async function rechercherParExtension(code) {
 
 function ouvrirModalAjout(carte) {
   carteSelectionnee = carte;
+  modeModification = false;
 
   const image = document.getElementById('modal-image');
   image.src = carte.image_url || '';
@@ -156,6 +168,31 @@ function ouvrirModalAjout(carte) {
   toggle.dataset.foil = 'false';
   toggle.querySelector('.toggle-texte').textContent = 'Normal';
 
+  document.getElementById('modal-confirmer').textContent = 'Ajouter à ma collection';
+
+  mettreAJourPrixModal();
+
+  document.getElementById('modal-ajout-carte').hidden = false;
+}
+
+function ouvrirModalModification(carte) {
+  carteSelectionnee = carte;
+  modeModification = true;
+
+  const image = document.getElementById('modal-image');
+  image.src = carte.image_url || '';
+  image.hidden = !carte.image_url;
+
+  document.getElementById('modal-nom').textContent = carte.nom;
+  document.getElementById('modal-info').textContent = `${carte.extension} - #${carte.numero} - ${carte.rarete || '?'}`;
+  document.getElementById('modal-quantite').value = carte.quantite;
+
+  const toggle = document.getElementById('modal-foil-toggle');
+  toggle.dataset.foil = carte.foil ? 'true' : 'false';
+  toggle.querySelector('.toggle-texte').textContent = carte.foil ? 'Foil' : 'Normal';
+
+  document.getElementById('modal-confirmer').textContent = 'Enregistrer les modifications';
+
   mettreAJourPrixModal();
 
   document.getElementById('modal-ajout-carte').hidden = false;
@@ -164,6 +201,7 @@ function ouvrirModalAjout(carte) {
 function fermerModal() {
   document.getElementById('modal-ajout-carte').hidden = true;
   carteSelectionnee = null;
+  modeModification = false;
 }
 
 function basculerFoil() {
@@ -179,29 +217,47 @@ function basculerFoil() {
 
 function mettreAJourPrixModal() {
   if (!carteSelectionnee) return;
-  const estFoil = document.getElementById('modal-foil-toggle').dataset.foil === 'true';
-  const prix = estFoil ? carteSelectionnee.prix_eur_foil : carteSelectionnee.prix_eur;
-  document.getElementById('modal-prix').textContent = prix ? `Prix estimé : ${prix} €` : 'Prix estimé : ?';
+
+  if (modeModification) {
+    const prix = carteSelectionnee.valeur_estimee;
+    document.getElementById('modal-prix').textContent = prix ? `Valeur actuelle : ${prix.toFixed(2)} €` : 'Valeur actuelle : ?';
+  } else {
+    const estFoil = document.getElementById('modal-foil-toggle').dataset.foil === 'true';
+    const prix = estFoil ? carteSelectionnee.prix_eur_foil : carteSelectionnee.prix_eur;
+    document.getElementById('modal-prix').textContent = prix ? `Prix estimé : ${prix} €` : 'Prix estimé : ?';
+  }
 }
 
-async function confirmerAjoutCarte() {
+async function confirmerModale() {
   if (!carteSelectionnee) return;
   const quantite = Number(document.getElementById('modal-quantite').value);
   if (!quantite || quantite < 1) return;
 
   const estFoil = document.getElementById('modal-foil-toggle').dataset.foil === 'true';
-  const valeurEstimee = estFoil ? carteSelectionnee.prix_eur_foil : carteSelectionnee.prix_eur;
 
-  await fetch('/cartes', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      ...carteSelectionnee,
-      quantite,
-      foil: estFoil,
-      valeur_estimee: valeurEstimee
-    })
-  });
+  if (modeModification) {
+    await fetch(`/cartes/${carteSelectionnee.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...carteSelectionnee,
+        quantite,
+        foil: estFoil
+      })
+    });
+  } else {
+    const valeurEstimee = estFoil ? carteSelectionnee.prix_eur_foil : carteSelectionnee.prix_eur;
+    await fetch('/cartes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...carteSelectionnee,
+        quantite,
+        foil: estFoil,
+        valeur_estimee: valeurEstimee
+      })
+    });
+  }
 
   fermerModal();
   chargerCartes();

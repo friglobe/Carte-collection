@@ -218,12 +218,13 @@ app.post('/cartes', verifierConnexion, async (req, res) => {
 });
 
 app.put('/cartes/:id', verifierConnexion, async (req, res) => {
-  const { nom, jeu, extension, numero, rarete, quantite, valeur_estimee, image_url } = req.body;
+  const { nom, jeu, extension, numero, rarete, quantite, valeur_estimee, image_url, foil } = req.body;
+  const foilValue = foil ? 1 : 0;
   await db.execute({
     sql: `UPDATE cartes
-          SET nom = ?, jeu = ?, extension = ?, numero = ?, rarete = ?, quantite = ?, valeur_estimee = ?, image_url = ?
+          SET nom = ?, jeu = ?, extension = ?, numero = ?, rarete = ?, quantite = ?, valeur_estimee = ?, image_url = ?, foil = ?
           WHERE id = ? AND user_id = ?`,
-    args: [nom, jeu, extension, numero, rarete, quantite, valeur_estimee ?? null, image_url ?? null, req.params.id, req.session.userId]
+    args: [nom, jeu, extension, numero, rarete, quantite, valeur_estimee ?? null, image_url ?? null, foilValue, req.params.id, req.session.userId]
   });
   res.json({ message: 'Carte mise à jour' });
 });
