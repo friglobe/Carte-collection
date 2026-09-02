@@ -15,7 +15,7 @@
 }
 
 body {
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
   max-width: 1100px;
@@ -31,6 +31,11 @@ header {
 header h1 {
   margin: 0;
   font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary), #818cf8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 #recherche {
@@ -67,14 +72,13 @@ header h1 {
 }
 
 #resultats-recherche {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 18px;
   margin-bottom: 30px;
 }
 
 .resultat-carte {
-  width: 130px;
   cursor: pointer;
   text-align: center;
   font-size: 0.85em;
@@ -92,6 +96,8 @@ header h1 {
 
 .resultat-carte img {
   width: 100%;
+  aspect-ratio: 5 / 7;
+  object-fit: cover;
   border-radius: 6px;
 }
 
@@ -124,6 +130,8 @@ header h1 {
 
 .carte img {
   width: 100%;
+  aspect-ratio: 5 / 7;
+  object-fit: cover;
   border-radius: 8px;
   margin-bottom: 10px;
 }
@@ -155,6 +163,7 @@ header h1 {
 .btn-supprimer:hover {
   background: var(--danger-dark);
 }
+
 #filtre-extension {
   padding: 8px 12px;
   border-radius: 8px;
@@ -168,6 +177,7 @@ header h1 {
   margin-bottom: 16px;
   font-size: 0.9rem;
 }
+
 #recherche select {
   padding: 10px 14px;
   border: 1px solid var(--border);
@@ -176,6 +186,7 @@ header h1 {
   background: var(--card-bg);
   color: var(--text);
 }
+
 #extensions-vignettes {
   display: flex;
   flex-wrap: wrap;
@@ -188,6 +199,9 @@ header h1 {
 
 .vignette-extension {
   width: 90px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
   cursor: pointer;
   background: var(--card-bg);
@@ -212,12 +226,12 @@ header h1 {
   margin-bottom: 6px;
 }
 
-.vignette-extension p {
+.vignette-extension span {
   font-size: 0.7rem;
-  margin: 0;
   line-height: 1.2;
   color: var(--text-light);
 }
+
 nav {
   display: flex;
   gap: 16px;
@@ -307,6 +321,7 @@ nav a:hover {
     grid-template-columns: 1fr;
   }
 }
+
 #btn-toggle-recherche {
   position: fixed;
   bottom: 24px;
@@ -338,6 +353,7 @@ nav a:hover {
 #btn-toggle-recherche:active {
   transform: translateY(0);
 }
+
 .conteneur-connexion {
   max-width: 400px;
   margin: 80px auto;
@@ -434,6 +450,7 @@ nav a:hover {
   border-color: var(--danger);
   color: white;
 }
+
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -441,6 +458,8 @@ nav a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow-y: auto;
+  padding: 20px 0;
   z-index: 200;
 }
 
@@ -473,9 +492,12 @@ nav a:hover {
 }
 
 .modal-contenu img {
-  max-width: 100%;
+  max-width: 180px;
+  aspect-ratio: 5 / 7;
+  object-fit: cover;
   border-radius: 8px;
-  margin-bottom: 12px;
+  margin: 0 auto 12px;
+  display: block;
 }
 
 .modal-contenu label {
@@ -570,6 +592,7 @@ nav a:hover {
 #modal-confirmer:hover {
   background: var(--primary-dark);
 }
+
 @media (max-width: 600px) {
   body {
     padding: 0 14px 60px;
@@ -599,7 +622,8 @@ nav a:hover {
     gap: 10px;
   }
 
-  #liste-cartes {
+  #liste-cartes,
+  #resultats-recherche {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
     gap: 12px;
   }
@@ -624,6 +648,7 @@ nav a:hover {
     right: 16px;
   }
 }
+
 :root[data-theme="sombre"] {
   --bg: #111827;
   --card-bg: #1f2937;
@@ -705,4 +730,49 @@ nav a:hover {
 .toggle-carte[data-actif="true"] .toggle-knob {
   left: calc(100% - 40px);
   background: var(--primary);
+}
+
+.carte,
+.resultat-carte {
+  border-left: 4px solid var(--border);
+}
+
+.carte[data-rarete="uncommon"],
+.resultat-carte[data-rarete="uncommon"] {
+  border-left-color: #60a5fa;
+}
+
+.carte[data-rarete="rare"],
+.resultat-carte[data-rarete="rare"] {
+  border-left-color: #eab308;
+}
+
+.carte[data-rarete="mythic"],
+.resultat-carte[data-rarete="mythic"] {
+  border-left-color: #f97316;
+}
+
+.badge-foil {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, #a78bfa, #34d399, #60a5fa);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.carte {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.carte:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.stat-tuile {
+  border-top: 3px solid var(--primary);
 }

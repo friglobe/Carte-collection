@@ -74,7 +74,7 @@ function afficherCartes(cartes, extensionFiltree = '') {
   document.getElementById('stats-collection').textContent = texteStats;
 
   conteneur.innerHTML = cartesAffichees.map(carte => `
-    <div class="carte">
+    <div class="carte" data-rarete="${carte.rarete}">
       ${carte.image_url ? `<img src="${carte.image_url}" alt="${carte.nom}">` : ''}
       <h3>${carte.nom}</h3>
       <p>${carte.extension} - #${carte.numero}</p>
@@ -126,7 +126,7 @@ async function rechercherParExtension(code) {
   const conteneur = document.getElementById('resultats-recherche');
 
   conteneur.innerHTML = cartes.map((carte, index) => `
-    <div class="resultat-carte" data-index="${index}">
+        <div class="resultat-carte" data-index="${index}" data-rarete="${carte.rarete}">
       ${carte.image_url ? `<img src="${carte.image_url}" alt="${carte.nom}">` : ''}
       <h4>${carte.nom}</h4>
       <p>#${carte.numero} - ${carte.rarete}</p>
