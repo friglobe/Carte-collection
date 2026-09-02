@@ -1,5 +1,8 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 require('dotenv').config();
+
+if (process.env.RESEAU_ENTREPRISE === 'true') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
 
 const express = require('express');
 const session = require('express-session');
