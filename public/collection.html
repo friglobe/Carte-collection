@@ -2,6 +2,11 @@
 <html lang="fr">
 
 <head>
+    <script>
+        if (localStorage.getItem('theme') === 'sombre') {
+            document.documentElement.setAttribute('data-theme', 'sombre');
+        }
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ma collection de cartes</title>
@@ -14,6 +19,7 @@
         <nav>
             <a href="index.html">Accueil</a>
             <a href="collection.html" class="actif">Ma collection</a>
+            <a href="profil.html">Profil</a>
             <button id="btn-deconnexion" type="button">Déconnexion</button>
         </nav>
     </header>

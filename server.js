@@ -68,6 +68,67 @@ app.get('/moi', (req, res) => {
   res.json({ connecte: true });
 });
 
+app.get('/profil', verifierConnexion, async (req, res) => {
+  const resultat = await db.execute({
+    sql: 'SELECT nom_utilisateur, avatar FROM users WHERE id = ?',
+    args: [req.session.userId]
+  });
+  const utilisateur = resultat.rows[0];
+  res.json({ nom_utilisateur: utilisateur.nom_utilisateur, avatar: utilisateur.avatar || '🙂' });
+});
+
+app.put('/profil/mot-de-passe', verifierConnexion, async (req, res) => {
+  const { mot_de_passe_actuel, nouveau_mot_de_passe } = req.body;
+  if (!mot_de_passe_actuel || !nouveau_mot_de_passe) {
+    return res.status(400).json({ erreur: 'Les deux mots de passe sont requis' });
+  }
+
+  const resultat = await db.execute({
+    sql: 'SELECT * FROM users WHERE id = ?',
+    args: [req.session.userId]
+  });
+  const utilisateur = resultat.rows[0];
+
+  if (!bcrypt.compareSync(mot_de_passe_actuel, utilisateur.mot_de_passe_hash)) {
+    return res.status(401).json({ erreur: 'Mot de passe actuel incorrect' });
+  }
+
+  const nouveauHash = bcrypt.hashSync(nouveau_mot_de_passe, 10);
+  await db.execute({
+    sql: 'UPDATE users SET mot_de_passe_hash = ? WHERE id = ?',
+    args: [nouveauHash, req.session.userId]
+  });
+
+  res.json({ message: 'Mot de passe mis à jour' });
+});
+
+app.put('/profil/avatar', verifierConnexion, async (req, res) => {
+  const { avatar } = req.body;
+  if (!avatar) return res.status(400).json({ erreur: 'Avatar requis' });
+
+  await db.execute({
+    sql: 'UPDATE users SET avatar = ? WHERE id = ?',
+    args: [avatar, req.session.userId]
+  });
+
+  res.json({ message: 'Avatar mis à jour' });
+});
+
+app.delete('/profil', verifierConnexion, async (req, res) => {
+  await db.execute({
+    sql: 'DELETE FROM cartes WHERE user_id = ?',
+    args: [req.session.userId]
+  });
+  await db.execute({
+    sql: 'DELETE FROM users WHERE id = ?',
+    args: [req.session.userId]
+  });
+
+  req.session.destroy(() => {
+    res.json({ message: 'Compte supprimé' });
+  });
+});
+
 app.get('/extensions', async (req, res) => {
   const reponse = await fetch('https://api.scryfall.com/sets', {
     headers: { 'User-Agent': 'CarteCollectionApp/1.0', 'Accept': 'application/json' }

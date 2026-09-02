@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    if (localStorage.getItem('theme') === 'sombre') {
+      document.documentElement.setAttribute('data-theme', 'sombre');
+    }
+  </script>
+  <title>Mon profil - Ma Collection de Cartes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>🎴 Ma Collection de Cartes</h1>
+    <nav>
+      <a href="index.html">Accueil</a>
+      <a href="collection.html">Collection</a>
+      <a href="profil.html" class="actif">Profil</a>
+      <button id="btn-deconnexion" type="button">Déconnexion</button>
+    </nav>
+  </header>
+
+  <section class="bloc-profil">
+    <h2>Mon avatar</h2>
+    <div id="avatar-actuel" class="avatar-actuel"></div>
+    <div id="choix-avatars" class="choix-avatars"></div>
+  </section>
+
+  <section class="bloc-profil">
+    <h2>Apparence</h2>
+    <button id="btn-theme-sombre" type="button" class="toggle-carte" data-actif="false">
+      <span class="toggle-texte">Clair</span>
+      <span class="toggle-knob"></span>
+    </button>
+  </section>
+
+  <section class="bloc-profil">
+    <h2>Changer de mot de passe</h2>
+    <form id="form-mot-de-passe" class="formulaire-connexion">
+      <label for="mdp-actuel">Mot de passe actuel</label>
+      <input type="password" id="mdp-actuel" name="mot_de_passe_actuel" required>
+
+      <label for="mdp-nouveau">Nouveau mot de passe</label>
+      <input type="password" id="mdp-nouveau" name="nouveau_mot_de_passe" required>
+
+      <button type="submit">Mettre à jour</button>
+    </form>
+    <p id="message-mot-de-passe" class="message-erreur"></p>
+  </section>
+
+  <section class="bloc-profil bloc-danger">
+    <h2>Zone de danger</h2>
+    <p>Supprimer ton compte effacera aussi toutes tes cartes. Cette action est définitive.</p>
+    <button id="btn-supprimer-compte" type="button" class="btn-supprimer">Supprimer mon compte</button>
+    <div id="confirmation-suppression" hidden>
+      <p>Es-tu sûr ? Cette action est irréversible.</p>
+      <button id="btn-confirmer-suppression" type="button" class="btn-supprimer">Oui, supprimer définitivement</button>
+      <button id="btn-annuler-suppression" type="button">Annuler</button>
+    </div>
+  </section>
+
+  <script src="auth.js"></script>
+  <script src="profil.js"></script>
+</body>
+</html>

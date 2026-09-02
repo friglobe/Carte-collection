@@ -30,6 +30,12 @@ async function initialiserBaseDeDonnees() {
       mot_de_passe_hash TEXT NOT NULL
     );
   `);
+
+  try {
+    await db.execute("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT '🙂'");
+  } catch (erreur) {
+    // La colonne existe déjà (normal après le premier lancement) — rien à faire
+  }
 }
 
 module.exports = { db, initialiserBaseDeDonnees };

@@ -173,7 +173,8 @@ header h1 {
   border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 1rem;
-  background: white;
+  background: var(--card-bg);
+  color: var(--text);
 }
 #extensions-vignettes {
   display: flex;
@@ -622,4 +623,86 @@ nav a:hover {
     bottom: 16px;
     right: 16px;
   }
+}
+:root[data-theme="sombre"] {
+  --bg: #111827;
+  --card-bg: #1f2937;
+  --text: #f3f4f6;
+  --text-light: #9ca3af;
+  --border: #374151;
+}
+
+.bloc-profil {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.bloc-profil h2 {
+  margin-top: 0;
+  font-size: 1.1rem;
+}
+
+.avatar-actuel {
+  font-size: 3rem;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.choix-avatars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.choix-avatar {
+  font-size: 1.5rem;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.choix-avatar:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.bloc-danger {
+  border: 1px solid var(--danger);
+}
+
+.bloc-danger h2 {
+  color: var(--danger);
+}
+
+#confirmation-suppression {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+#confirmation-suppression[hidden] {
+  display: none;
+}
+
+.toggle-carte[data-actif="true"] {
+  background: #2a2a3d;
+}
+
+.toggle-carte[data-actif="true"] .toggle-texte {
+  color: white;
+}
+
+.toggle-carte[data-actif="true"] .toggle-knob {
+  left: calc(100% - 40px);
+  background: var(--primary);
 }

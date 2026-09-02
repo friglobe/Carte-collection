@@ -1,11 +1,18 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+  <script>
+    if (localStorage.getItem('theme') === 'sombre') {
+      document.documentElement.setAttribute('data-theme', 'sombre');
+    }
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Connexion - Ma Collection de Cartes</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <div class="conteneur-connexion">
     <h1>🎴 Ma Collection de Cartes</h1>
@@ -40,4 +47,5 @@
 
   <script src="connexion.js"></script>
 </body>
+
 </html>
