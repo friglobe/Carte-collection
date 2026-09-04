@@ -151,12 +151,23 @@ app.get('/cartes/recherche', async (req, res) => {
   if (terme) requete += terme;
   if (extension) requete += (requete ? ' ' : '') + `e:${extension}`;
   if (!requete) return res.json([]);
-  const reponse = await fetch(`https://api.scryfall.com/cards/search?q=${encodeURIComponent(requete)}`, {
-    headers: { 'User-Agent': 'CarteCollectionApp/1.0', 'Accept': 'application/json' }
-  });
-  const resultat = await reponse.json();
-  if (!resultat.data) return res.json([]);
-  const cartesSimplifiees = resultat.data.map(carte => ({
+
+  let toutesLesCartesScryfall = [];
+  let url = `https://api.scryfall.com/cards/search?q=${encodeURIComponent(requete)}&unique=prints`;
+
+  while (url) {
+    const reponse = await fetch(url, {
+      headers: { 'User-Agent': 'CarteCollectionApp/1.0', 'Accept': 'application/json' }
+    });
+    const resultat = await reponse.json();
+
+    if (!resultat.data) break;
+
+    toutesLesCartesScryfall = toutesLesCartesScryfall.concat(resultat.data);
+    url = resultat.has_more ? resultat.next_page : null;
+  }
+
+  const cartesSimplifiees = toutesLesCartesScryfall.map(carte => ({
     nom: carte.name,
     jeu: 'Magic',
     extension: carte.set_name,
