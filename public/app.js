@@ -3,6 +3,7 @@ let toutesLesExtensions = [];
 let totalParExtension = {};
 let carteSelectionnee = null;
 let modeModification = false;
+let cartesExtensionActuelle = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
   const connecte = await verifierConnexion();
@@ -21,12 +22,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('filtre-extension').addEventListener('change', (e) => {
     afficherCartes(toutesLesCartes, e.target.value);
   });
-  document.getElementById('tri-collection').addEventListener('change', (e) => {
+
+  document.getElementById('tri-collection').addEventListener('change', () => {
     afficherCartes(toutesLesCartes, document.getElementById('filtre-extension').value);
   });
+
   document.getElementById('modal-fermer').addEventListener('click', fermerModal);
   document.getElementById('modal-confirmer').addEventListener('click', confirmerModale);
   document.getElementById('modal-foil-toggle').addEventListener('click', basculerFoil);
+
+  document.getElementById('btn-ajout-masse').addEventListener('click', ajouterNumerosEnMasse);
 
   chargerCartes();
   chargerExtensions();
@@ -38,6 +43,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function chargerCartes() {
+  const filtreActuel = document.getElementById('filtre-extension').value;
+
   const [reponseCartes, reponseExtensions] = await Promise.all([
     fetch('/cartes'),
     fetch('/extensions?tous=1')
@@ -51,7 +58,14 @@ async function chargerCartes() {
   });
 
   remplirFiltreExtensions();
-  afficherCartes(toutesLesCartes);
+
+  const select = document.getElementById('filtre-extension');
+  const filtreEncoreValide = [...select.options].some(option => option.value === filtreActuel);
+  if (filtreEncoreValide) {
+    select.value = filtreActuel;
+  }
+
+  afficherCartes(toutesLesCartes, select.value);
 }
 
 function remplirFiltreExtensions() {
@@ -62,30 +76,32 @@ function remplirFiltreExtensions() {
 }
 
 function trierCartes(cartes, critere) {
-  const carteTriees = [...cartes];
+  const cartesTriees = [...cartes];
   switch (critere) {
     case 'numero':
-      carteTriees.sort((a, b) => String(a.numero).localeCompare(String(b.numero), undefined, { numeric: true }));
+      cartesTriees.sort((a, b) => String(a.numero).localeCompare(String(b.numero), undefined, { numeric: true }));
       break;
     case 'prix-desc':
-      carteTriees.sort((a, b) => (b.valeur_estimee || 0) - (a.valeur_estimee || 0));
+      cartesTriees.sort((a, b) => (b.valeur_estimee || 0) - (a.valeur_estimee || 0));
       break;
     case 'prix-asc':
-      carteTriees.sort((a, b) => (a.valeur_estimee || 0) - (b.valeur_estimee || 0));
+      cartesTriees.sort((a, b) => (a.valeur_estimee || 0) - (b.valeur_estimee || 0));
       break;
     default:
-      carteTriees.sort((a, b) => a.nom.localeCompare(b.nom));
+      cartesTriees.sort((a, b) => a.nom.localeCompare(b.nom));
   }
-  return carteTriees;
+  return cartesTriees;
 }
 
 function afficherCartes(cartes, extensionFiltree = '') {
-  const conteneur = document.getElementById("liste-cartes");
+  const conteneur = document.getElementById('liste-cartes');
   let cartesAffichees = extensionFiltree
-  ? cartes.filter(c => c.extension === extensionFiltree)
-  : cartes;
-  const critereTri = document.getElementById('tri-collection').value
+    ? cartes.filter(c => c.extension === extensionFiltree)
+    : cartes;
+
+  const critereTri = document.getElementById('tri-collection').value;
   cartesAffichees = trierCartes(cartesAffichees, critereTri);
+
   const valeurTotale = cartesAffichees.reduce((somme, c) => somme + (c.valeur_estimee || 0) * c.quantite, 0);
   const nombreExemplaires = cartesAffichees.reduce((somme, c) => somme + c.quantite, 0);
 
@@ -155,6 +171,8 @@ function afficherVignettesExtensions(filtre = '') {
 async function rechercherParExtension(code) {
   const reponse = await fetch(`/cartes/recherche?extension=${encodeURIComponent(code)}`);
   const cartes = await reponse.json();
+  cartesExtensionActuelle = cartes;
+
   const conteneur = document.getElementById('resultats-recherche');
 
   conteneur.innerHTML = cartes.map((carte, index) => `
@@ -171,6 +189,58 @@ async function rechercherParExtension(code) {
       ouvrirModalAjout(cartes[div.dataset.index]);
     });
   });
+}
+
+async function ajouterNumerosEnMasse() {
+  const champ = document.getElementById('numeros-a-ajouter');
+  const message = document.getElementById('message-ajout-masse');
+
+  if (cartesExtensionActuelle.length === 0) {
+    message.textContent = "Choisis d'abord une extension ci-dessus.";
+    return;
+  }
+
+  const numerosDemandes = champ.value
+    .split(',')
+    .map(n => n.trim())
+    .filter(Boolean);
+
+  if (numerosDemandes.length === 0) {
+    message.textContent = 'Entre au moins un numéro.';
+    return;
+  }
+
+  const cartesTrouvees = [];
+  const numerosIntrouvables = [];
+
+  numerosDemandes.forEach(numero => {
+    const carte = cartesExtensionActuelle.find(c => String(c.numero) === numero);
+    if (carte) {
+      cartesTrouvees.push(carte);
+    } else {
+      numerosIntrouvables.push(numero);
+    }
+  });
+
+  await Promise.all(cartesTrouvees.map(carte => fetch('/cartes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      ...carte,
+      quantite: 1,
+      foil: false,
+      valeur_estimee: carte.prix_eur
+    })
+  })));
+
+  let texteMessage = `${cartesTrouvees.length} carte(s) ajoutée(s).`;
+  if (numerosIntrouvables.length > 0) {
+    texteMessage += ` Numéro(s) introuvable(s) dans cette extension : ${numerosIntrouvables.join(', ')}.`;
+  }
+  message.textContent = texteMessage;
+
+  champ.value = '';
+  chargerCartes();
 }
 
 function ouvrirModalAjout(carte) {
