@@ -222,37 +222,48 @@ header h1 {
   padding: 4px;
 }
 
+#extensions-vignettes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 12px;
+  margin: 16px 0 24px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px;
+}
+
 .vignette-extension {
-  width: 90px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   cursor: pointer;
   background: var(--card-bg);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 6px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .vignette-extension:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
   box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+  border-color: var(--primary);
 }
 
 .vignette-extension img {
   width: 32px;
   height: 32px;
   object-fit: contain;
-  background: #f0f0f0;
+  background: #ffffff;
+  border: 1px solid var(--border);
   border-radius: 50%;
   padding: 6px;
   margin-bottom: 6px;
 }
 
 .vignette-extension span {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   line-height: 1.2;
   color: var(--text-light);
 }
@@ -378,7 +389,14 @@ nav a:hover {
 #btn-toggle-recherche:active {
   transform: translateY(0);
 }
-
+#zone-recherche {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 20px 0 30px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+}
 .conteneur-connexion {
   max-width: 400px;
   margin: 80px auto;
@@ -806,14 +824,28 @@ nav a:hover {
   gap: 10px;
   flex-wrap: wrap;
 }
+
 #ajout-masse {
+  background: var(--bg);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 8px;
+}
+
+#ajout-masse h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.ajout-masse-ligne {
   display: flex;
   gap: 10px;
-  margin: 10px 0;
   flex-wrap: wrap;
 }
 
-#ajout-masse input {
+.ajout-masse-ligne input {
   flex: 1;
   min-width: 200px;
   padding: 10px 14px;
@@ -833,6 +865,7 @@ nav a:hover {
   background: var(--primary);
   color: white;
   transition: background 0.15s ease;
+  white-space: nowrap;
 }
 
 #ajout-masse button:hover {
@@ -842,7 +875,7 @@ nav a:hover {
 #message-ajout-masse {
   color: var(--text-light);
   font-size: 0.9rem;
-  margin: 0 0 16px;
+  margin: 10px 0 0;
 }
 #recherche-nom-carte {
   width: 100%;
@@ -854,4 +887,19 @@ nav a:hover {
   color: var(--text);
   margin: 10px 0;
   box-sizing: border-box;
+}
+#recherche-nom-carte:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+#btn-retour-collection {
+  display: inline-block;
+  margin: 10px 0 20px;
+  color: var(--text-light);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+#btn-retour-collection:hover {
+  color: var(--primary);
 }
