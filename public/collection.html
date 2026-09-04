@@ -39,9 +39,17 @@
 
     <section id="entete-collection">
         <h2>Ma collection</h2>
-        <select id="filtre-extension">
-            <option value="">Toutes les extensions</option>
-        </select>
+        <div class="filtres-collection">
+            <select id="filtre-extension">
+                <option value="">Toutes les extensions</option>
+            </select>
+            <select id="tri-collection">
+                <option value="nom">Nom (A-Z)</option>
+                <option value="numero">Numéro</option>
+                <option value="prix-desc">Prix (plus cher d'abord)</option>
+                <option value="prix-asc">Prix (moins cher d'abord)</option>
+            </select>
+        </div>
     </section>
     <p id="stats-collection"></p>
     <div id="liste-cartes"></div>

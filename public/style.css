@@ -801,3 +801,8 @@ nav a:hover {
 .stat-tuile {
   border-top: 3px solid var(--primary);
 }
+.filtres-collection{
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}

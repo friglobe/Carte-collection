@@ -21,7 +21,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('filtre-extension').addEventListener('change', (e) => {
     afficherCartes(toutesLesCartes, e.target.value);
   });
-
+  document.getElementById('tri-collection').addEventListener('change', (e) => {
+    afficherCartes(toutesLesCartes, document.getElementById('filtre-extension').value);
+  });
   document.getElementById('modal-fermer').addEventListener('click', fermerModal);
   document.getElementById('modal-confirmer').addEventListener('click', confirmerModale);
   document.getElementById('modal-foil-toggle').addEventListener('click', basculerFoil);
@@ -59,12 +61,31 @@ function remplirFiltreExtensions() {
     extensionsPossedees.map(ext => `<option value="${ext}">${ext}</option>`).join('');
 }
 
-function afficherCartes(cartes, extensionFiltree = '') {
-  const conteneur = document.getElementById('liste-cartes');
-  const cartesAffichees = extensionFiltree
-    ? cartes.filter(c => c.extension === extensionFiltree)
-    : cartes;
+function trierCartes(cartes, critere) {
+  const carteTriees = [...cartes];
+  switch (critere) {
+    case 'numero':
+      carteTriees.sort((a, b) => String(a.numero).localeCompare(String(b.numero), undefined, { numeric: true }));
+      break;
+    case 'prix-desc':
+      carteTriees.sort((a, b) => (b.valeur_estimee || 0) - (a.valeur_estimee || 0));
+      break;
+    case 'prix-asc':
+      carteTriees.sort((a, b) => (a.valeur_estimee || 0) - (b.valeur_estimee || 0));
+      break;
+    default:
+      carteTriees.sort((a, b) => a.nom.localeCompare(b.nom));
+  }
+  return carteTriees;
+}
 
+function afficherCartes(cartes, extensionFiltree = '') {
+  const conteneur = document.getElementById("liste-cartes");
+  let cartesAffichees = extensionFiltree
+  ? cartes.filter(c => c.extension === extensionFiltree)
+  : cartes;
+  const critereTri = document.getElementById('tri-collection').value
+  cartesAffichees = trierCartes(cartesAffichees, critereTri);
   const valeurTotale = cartesAffichees.reduce((somme, c) => somme + (c.valeur_estimee || 0) * c.quantite, 0);
   const nombreExemplaires = cartesAffichees.reduce((somme, c) => somme + c.quantite, 0);
 
