@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <script>
         if (localStorage.getItem('theme') === 'sombre') {
@@ -14,6 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <header>
         <h1>🃏 Ma collection de cartes</h1>
@@ -32,6 +34,11 @@
         <div class="filtres-collection">
             <select id="filtre-extension">
                 <option value="">Toutes les extensions</option>
+            </select>
+            <select id="filtre-foil">
+                <option value="">Toutes les cartes</option>
+                <option value="foil">Foil uniquement</option>
+                <option value="normal">Normal uniquement</option>
             </select>
             <select id="tri-collection">
                 <option value="nom">Nom (A-Z)</option>
@@ -64,4 +71,5 @@
     <script src="auth.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>

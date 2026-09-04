@@ -10,7 +10,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('filtre-extension').addEventListener('change', (e) => {
     afficherCartes(toutesLesCartes, e.target.value);
   });
-
+  document.getElementById('filtre-foil').addEventListener('change', () => {
+    afficherCartes(toutesLesCartes, document.getElementById('filtre-extension').value);
+  });
   document.getElementById('tri-collection').addEventListener('change', () => {
     afficherCartes(toutesLesCartes, document.getElementById('filtre-extension').value);
   });
@@ -78,6 +80,13 @@ function afficherCartes(cartes, extensionFiltree = '') {
   let cartesAffichees = extensionFiltree
     ? cartes.filter(c => c.extension === extensionFiltree)
     : cartes;
+
+  const filtreFoil = document.getElementById('filtre-foil').value;
+  if (filtreFoil === 'foil') {
+    cartesAffichees = cartesAffichees.filter(c => c.foil);
+  } else if (filtreFoil === 'normal') {
+    cartesAffichees = cartesAffichees.filter(c => !c.foil);
+  }
 
   const critereTri = document.getElementById('tri-collection').value;
   cartesAffichees = trierCartes(cartesAffichees, critereTri);
