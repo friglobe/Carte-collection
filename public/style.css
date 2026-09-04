@@ -844,3 +844,14 @@ nav a:hover {
   font-size: 0.9rem;
   margin: 0 0 16px;
 }
+#recherche-nom-carte {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: var(--card-bg);
+  color: var(--text);
+  margin: 10px 0;
+  box-sizing: border-box;
+}

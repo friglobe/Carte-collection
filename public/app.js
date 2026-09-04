@@ -19,6 +19,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     afficherVignettesExtensions(e.target.value);
   });
 
+  document.getElementById('recherche-nom-carte').addEventListener('input', (e) => {
+    filtrerResultatsParNom(e.target.value);
+  });
+
   document.getElementById('filtre-extension').addEventListener('change', (e) => {
     afficherCartes(toutesLesCartes, e.target.value);
   });
@@ -172,7 +176,11 @@ async function rechercherParExtension(code) {
   const reponse = await fetch(`/cartes/recherche?extension=${encodeURIComponent(code)}`);
   const cartes = await reponse.json();
   cartesExtensionActuelle = cartes;
+  document.getElementById('recherche-nom-carte').value = '';
+  afficherResultatsRecherche(cartesExtensionActuelle);
+}
 
+function afficherResultatsRecherche(cartes) {
   const conteneur = document.getElementById('resultats-recherche');
 
   conteneur.innerHTML = cartes.map((carte, index) => `
@@ -189,6 +197,14 @@ async function rechercherParExtension(code) {
       ouvrirModalAjout(cartes[div.dataset.index]);
     });
   });
+}
+
+function filtrerResultatsParNom(texte) {
+  const texteMinuscule = texte.toLowerCase();
+  const cartesFiltrees = cartesExtensionActuelle.filter(carte =>
+    carte.nom.toLowerCase().includes(texteMinuscule)
+  );
+  afficherResultatsRecherche(cartesFiltrees);
 }
 
 async function ajouterNumerosEnMasse() {
