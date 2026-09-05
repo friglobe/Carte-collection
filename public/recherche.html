@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <script>
         if (localStorage.getItem('theme') === 'sombre') {
@@ -14,6 +15,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <header>
         <h1>🔍 Rechercher une carte</h1>
@@ -28,6 +30,14 @@
     <a href="collection.html" id="btn-retour-collection">&larr; Retour à ma collection</a>
 
     <div id="zone-recherche">
+        <div id="choix-jeu-conteneur">
+            <label for="choix-jeu">Jeu :</label>
+            <select id="choix-jeu">
+                <option value="magic">Magic: The Gathering</option>
+                <option value="yugioh">Yu-Gi-Oh!</option>
+                <option value="onepiece">One Piece</option>
+            </select>
+        </div>
         <section id="recherche">
             <input type="text" id="recherche-extension-filtre" placeholder="🔍 Filtrer les extensions...">
         </section>
@@ -40,8 +50,25 @@
                 <input type="text" id="numeros-a-ajouter" placeholder="Numéros séparés par une virgule (ex: 14, 6, 19)">
                 <button type="button" id="btn-ajout-masse">Ajouter ces numéros</button>
             </div>
+            <p id="aide-ajout-masse" class="aide-champ" hidden>Carte ambiguë (plusieurs raretés ou variantes) ? Précise après ":" (ex: SBCB-EN001:secrète ou OP01-073:parallel)</p>
             <p id="message-ajout-masse"></p>
         </div>
+
+        <details id="ajout-manuel">
+            <summary>Ajouter une carte manuellement (introuvable via la recherche)</summary>
+            <p class="aide-champ">Pour les cartes absentes de la base (jetons, cartes de règles...)</p>
+            <div class="ajout-manuel-grille">
+                <input type="text" id="manuel-nom" placeholder="Nom de la carte">
+                <input type="text" id="manuel-extension" placeholder="Extension">
+                <input type="text" id="manuel-numero" placeholder="Numéro (ex: SDAZ-EN047)">
+                <input type="text" id="manuel-rarete" placeholder="Rareté">
+                <input type="url" id="manuel-image" placeholder="URL de l'image (optionnel)">
+                <input type="number" id="manuel-quantite" min="1" value="1" placeholder="Quantité">
+                <input type="number" id="manuel-prix" step="0.01" placeholder="Prix estimé € (optionnel)">
+            </div>
+            <button type="button" id="btn-ajout-manuel">Ajouter à ma collection</button>
+            <p id="message-ajout-manuel"></p>
+        </details>
 
         <input type="text" id="recherche-nom-carte" placeholder="🔎 Filtrer par nom de carte...">
 
@@ -68,4 +95,5 @@
     <script src="auth.js"></script>
     <script src="recherche.js"></script>
 </body>
+
 </html>

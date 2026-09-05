@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!connecte) return;
   initialiserDeconnexion();
 
+  document.getElementById('filtre-jeu').addEventListener('change', () => {
+    remplirFiltreExtensions();
+    afficherCartes(toutesLesCartes, document.getElementById('filtre-extension').value);
+  });
   document.getElementById('filtre-extension').addEventListener('change', (e) => {
     afficherCartes(toutesLesCartes, e.target.value);
   });
@@ -25,34 +29,51 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function chargerCartes() {
-  const filtreActuel = document.getElementById('filtre-extension').value;
+  const filtreJeuActuel = document.getElementById('filtre-jeu').value;
+  const filtreExtensionActuel = document.getElementById('filtre-extension').value;
 
-  const [reponseCartes, reponseExtensions] = await Promise.all([
+  const [reponseCartes, reponseExtensionsMagic, reponseExtensionsYugioh] = await Promise.all([
     fetch('/cartes'),
-    fetch('/extensions?tous=1')
+    fetch('/extensions?tous=1'),
+    fetch('/extensions?jeu=yugioh')
   ]);
   toutesLesCartes = await reponseCartes.json();
-  const extensions = await reponseExtensions.json();
+  const extensionsMagic = await reponseExtensionsMagic.json();
+  const extensionsYugioh = await reponseExtensionsYugioh.json();
 
   totalParExtension = {};
-  extensions.forEach(ext => {
+  [...extensionsMagic, ...extensionsYugioh].forEach(ext => {
     totalParExtension[ext.nom] = ext.total;
   });
 
-  remplirFiltreExtensions();
-
-  const select = document.getElementById('filtre-extension');
-  const filtreEncoreValide = [...select.options].some(option => option.value === filtreActuel);
-  if (filtreEncoreValide) {
-    select.value = filtreActuel;
+  remplirFiltreJeu();
+  const selectJeu = document.getElementById('filtre-jeu');
+  if ([...selectJeu.options].some(option => option.value === filtreJeuActuel)) {
+    selectJeu.value = filtreJeuActuel;
   }
 
-  afficherCartes(toutesLesCartes, select.value);
+  remplirFiltreExtensions();
+
+  const selectExtension = document.getElementById('filtre-extension');
+  if ([...selectExtension.options].some(option => option.value === filtreExtensionActuel)) {
+    selectExtension.value = filtreExtensionActuel;
+  }
+
+  afficherCartes(toutesLesCartes, selectExtension.value);
+}
+
+function remplirFiltreJeu() {
+  const select = document.getElementById('filtre-jeu');
+  const jeuxPossedes = [...new Set(toutesLesCartes.map(c => c.jeu))].filter(Boolean).sort();
+  select.innerHTML = '<option value="">Tous les jeux</option>' +
+    jeuxPossedes.map(jeu => `<option value="${jeu}">${jeu}</option>`).join('');
 }
 
 function remplirFiltreExtensions() {
   const select = document.getElementById('filtre-extension');
-  const extensionsPossedees = [...new Set(toutesLesCartes.map(c => c.extension))].filter(Boolean).sort();
+  const jeuFiltre = document.getElementById('filtre-jeu').value;
+  const cartesDuJeu = jeuFiltre ? toutesLesCartes.filter(c => c.jeu === jeuFiltre) : toutesLesCartes;
+  const extensionsPossedees = [...new Set(cartesDuJeu.map(c => c.extension))].filter(Boolean).sort();
   select.innerHTML = '<option value="">Toutes les extensions</option>' +
     extensionsPossedees.map(ext => `<option value="${ext}">${ext}</option>`).join('');
 }
@@ -77,9 +98,11 @@ function trierCartes(cartes, critere) {
 
 function afficherCartes(cartes, extensionFiltree = '') {
   const conteneur = document.getElementById('liste-cartes');
-  let cartesAffichees = extensionFiltree
-    ? cartes.filter(c => c.extension === extensionFiltree)
-    : cartes;
+  const jeuFiltre = document.getElementById('filtre-jeu').value;
+  let cartesAffichees = jeuFiltre ? cartes.filter(c => c.jeu === jeuFiltre) : cartes;
+  cartesAffichees = extensionFiltree
+    ? cartesAffichees.filter(c => c.extension === extensionFiltree)
+    : cartesAffichees;
 
   const filtreFoil = document.getElementById('filtre-foil').value;
   if (filtreFoil === 'foil') {

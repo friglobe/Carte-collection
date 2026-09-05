@@ -82,54 +82,61 @@ app.put('/profil/mot-de-passe', verifierConnexion, async (req, res) => {
   if (!mot_de_passe_actuel || !nouveau_mot_de_passe) {
     return res.status(400).json({ erreur: 'Les deux mots de passe sont requis' });
   }
-
   const resultat = await db.execute({
     sql: 'SELECT * FROM users WHERE id = ?',
     args: [req.session.userId]
   });
   const utilisateur = resultat.rows[0];
-
   if (!bcrypt.compareSync(mot_de_passe_actuel, utilisateur.mot_de_passe_hash)) {
     return res.status(401).json({ erreur: 'Mot de passe actuel incorrect' });
   }
-
   const nouveauHash = bcrypt.hashSync(nouveau_mot_de_passe, 10);
   await db.execute({
     sql: 'UPDATE users SET mot_de_passe_hash = ? WHERE id = ?',
     args: [nouveauHash, req.session.userId]
   });
-
   res.json({ message: 'Mot de passe mis à jour' });
 });
 
 app.put('/profil/avatar', verifierConnexion, async (req, res) => {
   const { avatar } = req.body;
   if (!avatar) return res.status(400).json({ erreur: 'Avatar requis' });
-
   await db.execute({
     sql: 'UPDATE users SET avatar = ? WHERE id = ?',
     args: [avatar, req.session.userId]
   });
-
   res.json({ message: 'Avatar mis à jour' });
 });
 
 app.delete('/profil', verifierConnexion, async (req, res) => {
-  await db.execute({
-    sql: 'DELETE FROM cartes WHERE user_id = ?',
-    args: [req.session.userId]
-  });
-  await db.execute({
-    sql: 'DELETE FROM users WHERE id = ?',
-    args: [req.session.userId]
-  });
-
-  req.session.destroy(() => {
-    res.json({ message: 'Compte supprimé' });
-  });
+  await db.execute({ sql: 'DELETE FROM cartes WHERE user_id = ?', args: [req.session.userId] });
+  await db.execute({ sql: 'DELETE FROM users WHERE id = ?', args: [req.session.userId] });
+  req.session.destroy(() => { res.json({ message: 'Compte supprimé' }); });
 });
 
 app.get('/extensions', async (req, res) => {
+  if (req.query.jeu === 'yugioh') {
+    const reponse = await fetch('https://db.ygoprodeck.com/api/v7/cardsets.php', {
+      headers: { 'Accept': 'application/json' }
+    });
+    const sets = await reponse.json();
+    const extensionsSimplifiees = sets
+      .map(set => ({ code: set.set_name, nom: set.set_name, icone: set.set_image || null, total: set.num_of_cards }))
+      .sort((a, b) => a.nom.localeCompare(b.nom));
+    return res.json(extensionsSimplifiees);
+  }
+
+  if (req.query.jeu === 'onepiece') {
+    const reponse = await fetch('https://optcgapi.com/api/allSets/', {
+      headers: { 'Accept': 'application/json' }
+    });
+    const sets = await reponse.json();
+    const extensionsSimplifiees = sets
+      .map(set => ({ code: set.set_id, nom: set.set_name, icone: null, total: null }))
+      .sort((a, b) => a.nom.localeCompare(b.nom));
+    return res.json(extensionsSimplifiees);
+  }
+
   const reponse = await fetch('https://api.scryfall.com/sets', {
     headers: { 'User-Agent': 'CarteCollectionApp/1.0', 'Accept': 'application/json' }
   });
@@ -145,6 +152,14 @@ app.get('/extensions', async (req, res) => {
 });
 
 app.get('/cartes/recherche', async (req, res) => {
+  if (req.query.jeu === 'yugioh') {
+    return rechercherCartesYuGiOh(req, res);
+  }
+
+  if (req.query.jeu === 'onepiece') {
+    return rechercherCartesOnePiece(req, res);
+  }
+
   const terme = req.query.nom;
   const extension = req.query.extension;
   let requete = '';
@@ -160,9 +175,7 @@ app.get('/cartes/recherche', async (req, res) => {
       headers: { 'User-Agent': 'CarteCollectionApp/1.0', 'Accept': 'application/json' }
     });
     const resultat = await reponse.json();
-
     if (!resultat.data) break;
-
     toutesLesCartesScryfall = toutesLesCartesScryfall.concat(resultat.data);
     url = resultat.has_more ? resultat.next_page : null;
   }
@@ -179,15 +192,217 @@ app.get('/cartes/recherche', async (req, res) => {
   }));
 
   cartesSimplifiees.sort((a, b) => a.numero.localeCompare(b.numero, undefined, { numeric: true }));
-
   res.json(cartesSimplifiees);
 });
 
-app.get('/cartes', verifierConnexion, async (req, res) => {
-  const resultat = await db.execute({
-    sql: 'SELECT * FROM cartes WHERE user_id = ?',
-    args: [req.session.userId]
+const TRADUCTIONS_RARETE_YUGIOH = {
+  'Common': 'Commune',
+  'Rare': 'Rare',
+  'Super Rare': 'Super Rare',
+  'Ultra Rare': 'Ultra Rare',
+  'Secret Rare': 'Rare Secrète',
+  'Ultra Secret Rare': 'Rare Secrète Ultra',
+  'Extra Secret Rare': 'Rare Secrète Extra',
+  'Extra Secret': 'Rare Secrète Extra',
+  'Prismatic Secret Rare': 'Rare Secrète Prismatique',
+  'Quarter Century Secret Rare': 'Rare Secrète Quart de Siècle',
+  'Platinum Secret Rare': 'Rare Secrète Platine',
+  'Gold Secret Rare': 'Rare Secrète Or',
+  'Ultimate Rare': 'Rare Ultime',
+  'Ghost Rare': 'Rare Fantôme',
+  'Ghost/Gold Rare': 'Rare Fantôme/Or',
+  'Gold Rare': 'Rare Or',
+  'Premium Gold Rare': 'Rare Or Premium',
+  'Platinum Rare': 'Rare Platine',
+  'Collector\'s Rare': 'Rare de Collection',
+  'Mosaic Rare': 'Rare Mosaïque',
+  'Starlight Rare': 'Rare Lumière Astrale',
+  'Normal Parallel Rare': 'Rare Parallèle Normale',
+  'Super Parallel Rare': 'Rare Parallèle Super',
+  'Ultra Parallel Rare': 'Rare Parallèle Ultra',
+  'Duel Terminal Normal Parallel Rare': 'Rare Parallèle Normale (Duel Terminal)',
+  'Duel Terminal Rare Parallel Rare': 'Rare Parallèle Rare (Duel Terminal)',
+  'Duel Terminal Super Parallel Rare': 'Rare Parallèle Super (Duel Terminal)',
+  'Duel Terminal Ultra Parallel Rare': 'Rare Parallèle Ultra (Duel Terminal)',
+  'Short Print': 'Tirage Court',
+  'Super Short Print': 'Tirage Super Court'
+};
+
+const TRADUCTIONS_TYPE_YUGIOH = {
+  'Normal Monster': 'Monstre Normal',
+  'Effect Monster': 'Monstre à Effet',
+  'Fusion Monster': 'Monstre Fusion',
+  'Ritual Monster': 'Monstre Rituel',
+  'Ritual Effect Monster': 'Monstre Rituel à Effet',
+  'Synchro Monster': 'Monstre Synchro',
+  'Synchro Tuner Monster': 'Monstre Synchro Syntoniseur',
+  'Synchro Pendulum Effect Monster': 'Monstre Synchro à Effet Pendule',
+  'Xyz Monster': 'Monstre Xyz',
+  'Xyz Pendulum Effect Monster': 'Monstre Xyz à Effet Pendule',
+  'Link Monster': 'Monstre Lien',
+  'Pendulum Normal Monster': 'Monstre Normal Pendule',
+  'Pendulum Effect Monster': 'Monstre à Effet Pendule',
+  'Pendulum Effect Fusion Monster': 'Monstre Fusion à Effet Pendule',
+  'Pendulum Flip Effect Monster': 'Monstre à Effet Retourner Pendule',
+  'Flip Effect Monster': 'Monstre à Effet Retourner',
+  'Flip Tuner Effect Monster': 'Monstre à Effet Retourner Syntoniseur',
+  'Gemini Monster': 'Monstre Jumeau',
+  'Spirit Monster': 'Monstre Esprit',
+  'Toon Monster': 'Monstre Toon',
+  'Tuner Monster': 'Monstre Syntoniseur',
+  'Union Effect Monster': 'Monstre à Effet Union',
+  'Spell Card': 'Carte Magie',
+  'Trap Card': 'Carte Piège',
+  'Skill Card': 'Carte Compétence',
+  'Token': 'Jeton'
+};
+
+function traduireRareteYuGiOh(rarete) {
+  return TRADUCTIONS_RARETE_YUGIOH[rarete] || rarete;
+}
+
+function traduireTypeYuGiOh(type) {
+  return TRADUCTIONS_TYPE_YUGIOH[type] || type;
+}
+
+const TRADUCTIONS_RARETE_ONEPIECE = {
+  'L': 'Leader',
+  'C': 'Commune',
+  'UC': 'Peu Commune',
+  'R': 'Rare',
+  'SR': 'Super Rare',
+  'SEC': 'Secrète',
+  'PR': 'Promo',
+  'P': 'Promo',
+  'SP': 'Spéciale'
+};
+
+function traduireRareteOnePiece(rarete) {
+  return TRADUCTIONS_RARETE_ONEPIECE[rarete] || rarete;
+}
+
+async function rechercherCartesYuGiOh(req, res) {
+  const terme = req.query.nom;
+  const extension = req.query.extension;
+
+  let urlBase;
+  if (extension) {
+    urlBase = `https://db.ygoprodeck.com/api/v7/cardinfo.php?cardset=${encodeURIComponent(extension)}`;
+  } else if (terme) {
+    urlBase = `https://db.ygoprodeck.com/api/v7/cardinfo.php?fname=${encodeURIComponent(terme)}`;
+  } else {
+    return res.json([]);
+  }
+
+  // L'API ygoprodeck exclut totalement les cartes sans traduction française quand language=fr
+  // est précisé. On récupère donc toujours la version anglaise (complète) et on superpose
+  // le nom français par-dessus quand il existe, pour ne perdre aucune carte.
+  const [reponseBase, reponseFr] = await Promise.all([
+    fetch(urlBase, { headers: { 'Accept': 'application/json' } }),
+    fetch(`${urlBase}&language=fr`, { headers: { 'Accept': 'application/json' } })
+  ]);
+
+  if (reponseBase.status === 400 && reponseFr.status === 400) {
+    return res.json([]);
+  }
+
+  // La version française d'une carte traduite a un "id" différent de la version anglaise chez
+  // ygoprodeck : on ne peut donc pas fusionner par id. Le champ "name_en" de la réponse FR donne
+  // le nom anglais d'origine, qui lui correspond bien au nom de la version de base.
+  const cartesParNomAnglais = {};
+  if (reponseBase.status !== 400) {
+    const resultatBase = await reponseBase.json();
+    (resultatBase.data || []).forEach(carte => { cartesParNomAnglais[carte.name] = carte; });
+  }
+  if (reponseFr.status !== 400) {
+    const resultatFr = await reponseFr.json();
+    (resultatFr.data || []).forEach(carte => {
+      const nomAnglais = carte.name_en || carte.name;
+      if (cartesParNomAnglais[nomAnglais]) {
+        cartesParNomAnglais[nomAnglais].name = carte.name;
+      } else {
+        cartesParNomAnglais[nomAnglais] = carte;
+      }
+    });
+  }
+  const cartesBrutes = Object.values(cartesParNomAnglais);
+
+  const cartesSimplifiees = [];
+
+  cartesBrutes.forEach(carte => {
+    const image = carte.card_images && carte.card_images[0] ? carte.card_images[0].image_url : null;
+    const prixEur = carte.card_prices && carte.card_prices[0]
+      ? parseFloat(carte.card_prices[0].cardmarket_price) || null
+      : null;
+
+    if (extension) {
+      const impressions = (carte.card_sets || []).filter(s => s.set_name === extension);
+      impressions.forEach(impression => {
+        cartesSimplifiees.push({
+          nom: carte.name,
+          jeu: 'Yu-Gi-Oh',
+          extension: impression.set_name,
+          numero: impression.set_code,
+          rarete: traduireRareteYuGiOh(impression.set_rarity),
+          image_url: image,
+          prix_eur: prixEur,
+          prix_eur_foil: null
+        });
+      });
+    } else {
+      cartesSimplifiees.push({
+        nom: carte.name,
+        jeu: 'Yu-Gi-Oh',
+        extension: carte.card_sets && carte.card_sets[0] ? carte.card_sets[0].set_name : '',
+        numero: carte.card_sets && carte.card_sets[0] ? carte.card_sets[0].set_code : '',
+        rarete: carte.card_sets && carte.card_sets[0] ? traduireRareteYuGiOh(carte.card_sets[0].set_rarity) : traduireTypeYuGiOh(carte.type || '?'),
+        image_url: image,
+        prix_eur: prixEur,
+        prix_eur_foil: null
+      });
+    }
   });
+
+  cartesSimplifiees.sort((a, b) => String(a.numero).localeCompare(String(b.numero), undefined, { numeric: true }));
+  res.json(cartesSimplifiees);
+}
+
+async function rechercherCartesOnePiece(req, res) {
+  const terme = req.query.nom;
+  const extension = req.query.extension;
+
+  let url;
+  if (extension) {
+    url = `https://optcgapi.com/api/sets/${encodeURIComponent(extension)}/`;
+  } else if (terme) {
+    url = `https://optcgapi.com/api/sets/filtered/?card_name=${encodeURIComponent(terme)}`;
+  } else {
+    return res.json([]);
+  }
+
+  const reponse = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  if (!reponse.ok) {
+    return res.json([]);
+  }
+  const cartesBrutes = await reponse.json();
+
+  const cartesSimplifiees = (Array.isArray(cartesBrutes) ? cartesBrutes : []).map(carte => ({
+    nom: carte.card_name,
+    jeu: 'One Piece',
+    extension: carte.set_name,
+    numero: carte.card_set_id,
+    rarete: traduireRareteOnePiece(carte.rarity),
+    image_url: carte.card_image || null,
+    prix_eur: null,
+    prix_eur_foil: null
+  }));
+
+  cartesSimplifiees.sort((a, b) => String(a.numero).localeCompare(String(b.numero), undefined, { numeric: true }));
+  res.json(cartesSimplifiees);
+}
+
+app.get('/cartes', verifierConnexion, async (req, res) => {
+  const resultat = await db.execute({ sql: 'SELECT * FROM cartes WHERE user_id = ?', args: [req.session.userId] });
   res.json(resultat.rows);
 });
 
@@ -204,27 +419,20 @@ app.get('/cartes/:id', verifierConnexion, async (req, res) => {
 app.post('/cartes', verifierConnexion, async (req, res) => {
   const { nom, jeu, extension, numero, rarete, quantite, valeur_estimee, image_url, foil } = req.body;
   const foilValue = foil ? 1 : 0;
-
   const existante = await db.execute({
-    sql: `SELECT * FROM cartes WHERE nom = ? AND jeu = ? AND extension = ? AND numero = ? AND foil = ? AND user_id = ?`,
-    args: [nom, jeu, extension, numero, foilValue, req.session.userId]
+    sql: `SELECT * FROM cartes WHERE nom = ? AND jeu = ? AND extension = ? AND numero = ? AND rarete = ? AND foil = ? AND user_id = ?`,
+    args: [nom, jeu, extension, numero, rarete, foilValue, req.session.userId]
   });
-
   if (existante.rows.length > 0) {
     const carteExistante = existante.rows[0];
-    await db.execute({
-      sql: 'UPDATE cartes SET quantite = quantite + ? WHERE id = ?',
-      args: [Number(quantite), carteExistante.id]
-    });
+    await db.execute({ sql: 'UPDATE cartes SET quantite = quantite + ? WHERE id = ?', args: [Number(quantite), carteExistante.id] });
     return res.json({ id: Number(carteExistante.id), message: 'Quantité mise à jour' });
   }
-
   const resultat = await db.execute({
     sql: `INSERT INTO cartes (nom, jeu, extension, numero, rarete, quantite, valeur_estimee, image_url, foil, user_id)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     args: [nom, jeu, extension, numero, rarete, quantite, valeur_estimee ?? null, image_url ?? null, foilValue, req.session.userId]
   });
-
   res.status(201).json({ id: Number(resultat.lastInsertRowid) });
 });
 
@@ -241,10 +449,7 @@ app.put('/cartes/:id', verifierConnexion, async (req, res) => {
 });
 
 app.delete('/cartes/:id', verifierConnexion, async (req, res) => {
-  await db.execute({
-    sql: 'DELETE FROM cartes WHERE id = ? AND user_id = ?',
-    args: [req.params.id, req.session.userId]
-  });
+  await db.execute({ sql: 'DELETE FROM cartes WHERE id = ? AND user_id = ?', args: [req.params.id, req.session.userId] });
   res.json({ message: 'Carte supprimée' });
 });
 

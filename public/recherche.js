@@ -1,11 +1,22 @@
 let toutesLesExtensions = [];
 let cartesExtensionActuelle = [];
 let carteSelectionnee = null;
+let jeuActuel = 'magic';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const connecte = await verifierConnexion();
   if (!connecte) return;
   initialiserDeconnexion();
+
+  document.getElementById('choix-jeu').addEventListener('change', (e) => {
+    jeuActuel = e.target.value;
+    document.getElementById('recherche-extension-filtre').value = '';
+    document.getElementById('recherche-nom-carte').value = '';
+    document.getElementById('resultats-recherche').innerHTML = '';
+    document.getElementById('aide-ajout-masse').hidden = jeuActuel !== 'yugioh' && jeuActuel !== 'onepiece';
+    cartesExtensionActuelle = [];
+    chargerExtensions();
+  });
 
   document.getElementById('recherche-extension-filtre').addEventListener('input', (e) => {
     afficherVignettesExtensions(e.target.value);
@@ -20,12 +31,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('modal-foil-toggle').addEventListener('click', basculerFoil);
 
   document.getElementById('btn-ajout-masse').addEventListener('click', ajouterNumerosEnMasse);
+  document.getElementById('btn-ajout-manuel').addEventListener('click', ajouterCarteManuellement);
 
   chargerExtensions();
 });
 
 async function chargerExtensions() {
-  const reponse = await fetch('/extensions');
+  const reponse = await fetch(`/extensions?jeu=${jeuActuel}`);
   toutesLesExtensions = await reponse.json();
   afficherVignettesExtensions();
 }
@@ -52,10 +64,11 @@ function afficherVignettesExtensions(filtre = '') {
 }
 
 async function rechercherParExtension(code) {
-  const reponse = await fetch(`/cartes/recherche?extension=${encodeURIComponent(code)}`);
+  const reponse = await fetch(`/cartes/recherche?extension=${encodeURIComponent(code)}&jeu=${jeuActuel}`);
   const cartes = await reponse.json();
   cartesExtensionActuelle = cartes;
   document.getElementById('recherche-nom-carte').value = '';
+  document.getElementById('manuel-extension').value = cartes[0] ? cartes[0].extension : '';
   afficherResultatsRecherche(cartesExtensionActuelle);
 }
 
@@ -104,13 +117,32 @@ async function ajouterNumerosEnMasse() {
 
   const cartesTrouvees = [];
   const numerosIntrouvables = [];
+  const numerosAmbigus = [];
 
-  numerosDemandes.forEach(numero => {
-    const carte = cartesExtensionActuelle.find(c => String(c.numero) === numero);
-    if (carte) {
-      cartesTrouvees.push(carte);
+  const normaliser = texte => texte.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+  numerosDemandes.forEach(demande => {
+    const [numero, rareteDemandee] = demande.split(':').map(partie => partie.trim());
+    let cartesCorrespondantes = cartesExtensionActuelle.filter(c => String(c.numero) === numero);
+
+    if (cartesCorrespondantes.length > 1 && rareteDemandee) {
+      const descripteur = c => normaliser(`${c.rarete} ${c.nom}`);
+      const motCle = normaliser(rareteDemandee);
+      const raretesExactes = cartesCorrespondantes.filter(c => normaliser(c.rarete) === motCle);
+      if (raretesExactes.length > 0) {
+        cartesCorrespondantes = raretesExactes;
+      } else {
+        const correspondancesPartielles = cartesCorrespondantes.filter(c => descripteur(c).includes(motCle));
+        if (correspondancesPartielles.length > 0) cartesCorrespondantes = correspondancesPartielles;
+      }
+    }
+
+    if (cartesCorrespondantes.length === 1) {
+      cartesTrouvees.push(cartesCorrespondantes[0]);
+    } else if (cartesCorrespondantes.length > 1) {
+      numerosAmbigus.push(demande);
     } else {
-      numerosIntrouvables.push(numero);
+      numerosIntrouvables.push(demande);
     }
   });
 
@@ -121,6 +153,9 @@ async function ajouterNumerosEnMasse() {
   })));
 
   let texteMessage = `${cartesTrouvees.length} carte(s) ajoutée(s).`;
+  if (numerosAmbigus.length > 0) {
+    texteMessage += ` Numéro(s) avec plusieurs raretés, à ajouter depuis la liste ci-dessous : ${numerosAmbigus.join(', ')}.`;
+  }
   if (numerosIntrouvables.length > 0) {
     texteMessage += ` Numéro(s) introuvable(s) dans cette extension : ${numerosIntrouvables.join(', ')}.`;
   }
@@ -187,4 +222,47 @@ async function confirmerAjout() {
   });
 
   fermerModal();
+}
+
+const LIBELLES_JEU = { magic: 'Magic', yugioh: 'Yu-Gi-Oh', onepiece: 'One Piece' };
+
+async function ajouterCarteManuellement() {
+  const message = document.getElementById('message-ajout-manuel');
+  const nom = document.getElementById('manuel-nom').value.trim();
+  if (!nom) {
+    message.textContent = 'Le nom de la carte est requis.';
+    return;
+  }
+
+  const extension = document.getElementById('manuel-extension').value.trim();
+  const numero = document.getElementById('manuel-numero').value.trim();
+  const rarete = document.getElementById('manuel-rarete').value.trim();
+  const image_url = document.getElementById('manuel-image').value.trim();
+  const quantite = Number(document.getElementById('manuel-quantite').value) || 1;
+  const prixSaisi = document.getElementById('manuel-prix').value;
+  const valeur_estimee = prixSaisi ? Number(prixSaisi) : null;
+
+  await fetch('/cartes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      nom,
+      jeu: LIBELLES_JEU[jeuActuel] || jeuActuel,
+      extension,
+      numero,
+      rarete,
+      quantite,
+      valeur_estimee,
+      image_url: image_url || null,
+      foil: false
+    })
+  });
+
+  message.textContent = `"${nom}" ajoutée à ta collection.`;
+  document.getElementById('manuel-nom').value = '';
+  document.getElementById('manuel-numero').value = '';
+  document.getElementById('manuel-rarete').value = '';
+  document.getElementById('manuel-image').value = '';
+  document.getElementById('manuel-quantite').value = 1;
+  document.getElementById('manuel-prix').value = '';
 }
