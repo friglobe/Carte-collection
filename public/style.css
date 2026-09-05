@@ -998,3 +998,91 @@ nav a:hover {
   background: var(--bg);
   color: var(--text);
 }
+
+.liste-amis {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.carte-ami {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+}
+
+.avatar-ami {
+  font-size: 1.8rem;
+}
+
+.nom-ami {
+  font-weight: 600;
+  color: var(--text);
+  min-width: 120px;
+}
+
+.statut-attente {
+  color: var(--text-light);
+  font-size: 0.85rem;
+  font-style: italic;
+  margin: 0;
+}
+
+.stats-ami {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+.stats-ami p {
+  margin: 0;
+}
+
+.actions-ami {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.actions-ami button,
+.btn-voir-stats {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+  background: var(--primary);
+  color: white;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.actions-ami button:hover,
+.btn-voir-stats:hover {
+  background: var(--primary-dark);
+}
+
+.btn-refuser-ami,
+.btn-annuler-ami,
+.btn-retirer-ami {
+  background: var(--bg) !important;
+  color: var(--danger) !important;
+  border: 1px solid var(--danger) !important;
+}
+
+.btn-refuser-ami:hover,
+.btn-annuler-ami:hover,
+.btn-retirer-ami:hover {
+  background: var(--danger) !important;
+  color: white !important;
+}

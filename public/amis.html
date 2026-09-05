@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <script>
+        if (localStorage.getItem('theme') === 'sombre') {
+            document.documentElement.setAttribute('data-theme', 'sombre');
+        }
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes amis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <h1>🤝 Mes amis</h1>
+        <nav>
+            <a href="index.html">Accueil</a>
+            <a href="collection.html">Ma collection</a>
+            <a href="amis.html" class="actif">Amis</a>
+            <a href="profil.html">Profil</a>
+            <button id="btn-deconnexion" type="button">Déconnexion</button>
+        </nav>
+    </header>
+
+    <section class="bloc-profil">
+        <h2>Ajouter un ami</h2>
+        <div class="ajout-masse-ligne">
+            <input type="text" id="nom-utilisateur-ami" placeholder="Nom d'utilisateur exact">
+            <button type="button" id="btn-demande-ami">Envoyer une demande</button>
+        </div>
+        <p id="message-demande-ami"></p>
+    </section>
+
+    <section class="bloc-profil" id="section-demandes-recues" hidden>
+        <h2>Demandes reçues</h2>
+        <div id="liste-demandes-recues" class="liste-amis"></div>
+    </section>
+
+    <section class="bloc-profil" id="section-demandes-envoyees" hidden>
+        <h2>Demandes envoyées</h2>
+        <div id="liste-demandes-envoyees" class="liste-amis"></div>
+    </section>
+
+    <section class="bloc-profil">
+        <h2>Mes amis</h2>
+        <p id="message-aucun-ami" hidden>Tu n'as pas encore d'amis. Envoie une demande ci-dessus !</p>
+        <div id="liste-amis" class="liste-amis"></div>
+    </section>
+
+    <script src="auth.js"></script>
+    <script src="amis.js"></script>
+</body>
+
+</html>

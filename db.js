@@ -31,6 +31,16 @@ async function initialiserBaseDeDonnees() {
     );
   `);
 
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS amities (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      demandeur_id INTEGER NOT NULL,
+      destinataire_id INTEGER NOT NULL,
+      statut TEXT NOT NULL DEFAULT 'attente',
+      UNIQUE(demandeur_id, destinataire_id)
+    );
+  `);
+
   try {
     await db.execute("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT '🙂'");
   } catch (erreur) {

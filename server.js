@@ -110,8 +110,117 @@ app.put('/profil/avatar', verifierConnexion, async (req, res) => {
 
 app.delete('/profil', verifierConnexion, async (req, res) => {
   await db.execute({ sql: 'DELETE FROM cartes WHERE user_id = ?', args: [req.session.userId] });
+  await db.execute({
+    sql: 'DELETE FROM amities WHERE demandeur_id = ? OR destinataire_id = ?',
+    args: [req.session.userId, req.session.userId]
+  });
   await db.execute({ sql: 'DELETE FROM users WHERE id = ?', args: [req.session.userId] });
   req.session.destroy(() => { res.json({ message: 'Compte supprimé' }); });
+});
+
+app.post('/amis/demande', verifierConnexion, async (req, res) => {
+  const { nom_utilisateur } = req.body;
+  if (!nom_utilisateur) return res.status(400).json({ erreur: "Nom d'utilisateur requis" });
+
+  const resultatCible = await db.execute({
+    sql: 'SELECT id FROM users WHERE nom_utilisateur = ?',
+    args: [nom_utilisateur]
+  });
+  const cible = resultatCible.rows[0];
+  if (!cible) return res.status(404).json({ erreur: 'Utilisateur introuvable' });
+  if (Number(cible.id) === req.session.userId) {
+    return res.status(400).json({ erreur: "Tu ne peux pas t'ajouter toi-même" });
+  }
+
+  const relationExistante = await db.execute({
+    sql: `SELECT * FROM amities WHERE (demandeur_id = ? AND destinataire_id = ?) OR (demandeur_id = ? AND destinataire_id = ?)`,
+    args: [req.session.userId, cible.id, cible.id, req.session.userId]
+  });
+  if (relationExistante.rows.length > 0) {
+    return res.status(400).json({ erreur: 'Une relation existe déjà avec cet utilisateur' });
+  }
+
+  await db.execute({
+    sql: 'INSERT INTO amities (demandeur_id, destinataire_id, statut) VALUES (?, ?, ?)',
+    args: [req.session.userId, cible.id, 'attente']
+  });
+  res.status(201).json({ message: 'Demande envoyée' });
+});
+
+app.get('/amis', verifierConnexion, async (req, res) => {
+  const moi = req.session.userId;
+  const resultat = await db.execute({
+    sql: `
+      SELECT a.id, a.statut, a.demandeur_id, a.destinataire_id, u.nom_utilisateur, u.avatar,
+        CASE WHEN a.demandeur_id = ? THEN a.destinataire_id ELSE a.demandeur_id END AS ami_id
+      FROM amities a
+      JOIN users u ON u.id = CASE WHEN a.demandeur_id = ? THEN a.destinataire_id ELSE a.demandeur_id END
+      WHERE a.demandeur_id = ? OR a.destinataire_id = ?
+    `,
+    args: [moi, moi, moi, moi]
+  });
+
+  const amis = [];
+  const demandesRecues = [];
+  const demandesEnvoyees = [];
+
+  resultat.rows.forEach(ligne => {
+    const info = { id: Number(ligne.id), ami_id: Number(ligne.ami_id), nom_utilisateur: ligne.nom_utilisateur, avatar: ligne.avatar || '🙂' };
+    if (ligne.statut === 'acceptee') {
+      amis.push(info);
+    } else if (Number(ligne.destinataire_id) === moi) {
+      demandesRecues.push(info);
+    } else {
+      demandesEnvoyees.push(info);
+    }
+  });
+
+  res.json({ amis, demandesRecues, demandesEnvoyees });
+});
+
+app.put('/amis/:id/accepter', verifierConnexion, async (req, res) => {
+  const resultat = await db.execute({
+    sql: `SELECT * FROM amities WHERE id = ? AND destinataire_id = ? AND statut = 'attente'`,
+    args: [req.params.id, req.session.userId]
+  });
+  if (resultat.rows.length === 0) return res.status(404).json({ erreur: 'Demande introuvable' });
+
+  await db.execute({ sql: `UPDATE amities SET statut = 'acceptee' WHERE id = ?`, args: [req.params.id] });
+  res.json({ message: 'Demande acceptée' });
+});
+
+app.delete('/amis/:id', verifierConnexion, async (req, res) => {
+  await db.execute({
+    sql: 'DELETE FROM amities WHERE id = ? AND (demandeur_id = ? OR destinataire_id = ?)',
+    args: [req.params.id, req.session.userId, req.session.userId]
+  });
+  res.json({ message: 'Relation supprimée' });
+});
+
+app.get('/amis/:id/stats', verifierConnexion, async (req, res) => {
+  const amiId = Number(req.params.id);
+  const relation = await db.execute({
+    sql: `SELECT * FROM amities WHERE statut = 'acceptee' AND ((demandeur_id = ? AND destinataire_id = ?) OR (demandeur_id = ? AND destinataire_id = ?))`,
+    args: [req.session.userId, amiId, amiId, req.session.userId]
+  });
+  if (relation.rows.length === 0) return res.status(403).json({ erreur: "Vous n'êtes pas amis avec cet utilisateur" });
+
+  const resultatUtilisateur = await db.execute({ sql: 'SELECT nom_utilisateur, avatar FROM users WHERE id = ?', args: [amiId] });
+  const utilisateur = resultatUtilisateur.rows[0];
+  if (!utilisateur) return res.status(404).json({ erreur: 'Utilisateur introuvable' });
+
+  const resultatCartes = await db.execute({ sql: 'SELECT quantite, valeur_estimee FROM cartes WHERE user_id = ?', args: [amiId] });
+  const cartes = resultatCartes.rows;
+  const nombreExemplaires = cartes.reduce((somme, c) => somme + Number(c.quantite), 0);
+  const valeurTotale = cartes.reduce((somme, c) => somme + (Number(c.valeur_estimee) || 0) * Number(c.quantite), 0);
+
+  res.json({
+    nom_utilisateur: utilisateur.nom_utilisateur,
+    avatar: utilisateur.avatar || '🙂',
+    nombreCartesDifferentes: cartes.length,
+    nombreExemplaires,
+    valeurTotale
+  });
 });
 
 app.get('/extensions', async (req, res) => {
