@@ -127,12 +127,20 @@ app.get('/extensions', async (req, res) => {
   }
 
   if (req.query.jeu === 'onepiece') {
-    const reponse = await fetch('https://optcgapi.com/api/allSets/', {
-      headers: { 'Accept': 'application/json' }
+    const [reponseSets, reponseCartes] = await Promise.all([
+      fetch('https://optcgapi.com/api/allSets/', { headers: { 'Accept': 'application/json' } }),
+      fetch('https://optcgapi.com/api/allSetCards/', { headers: { 'Accept': 'application/json' } })
+    ]);
+    const sets = await reponseSets.json();
+    const cartes = await reponseCartes.json();
+
+    const totalParSet = {};
+    (Array.isArray(cartes) ? cartes : []).forEach(carte => {
+      totalParSet[carte.set_id] = (totalParSet[carte.set_id] || 0) + 1;
     });
-    const sets = await reponse.json();
+
     const extensionsSimplifiees = sets
-      .map(set => ({ code: set.set_id, nom: set.set_name, icone: null, total: null }))
+      .map(set => ({ code: set.set_id, nom: set.set_name, icone: null, total: totalParSet[set.set_id] || null }))
       .sort((a, b) => a.nom.localeCompare(b.nom));
     return res.json(extensionsSimplifiees);
   }

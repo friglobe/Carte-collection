@@ -6,15 +6,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function chargerTableauDeBord() {
-  const [reponseCartes, reponseExtensions] = await Promise.all([
+  const [reponseCartes, reponseExtensionsMagic, reponseExtensionsYugioh, reponseExtensionsOnePiece] = await Promise.all([
     fetch('/cartes'),
-    fetch('/extensions?tous=1')
+    fetch('/extensions?tous=1'),
+    fetch('/extensions?jeu=yugioh'),
+    fetch('/extensions?jeu=onepiece')
   ]);
   const cartes = await reponseCartes.json();
-  const extensions = await reponseExtensions.json();
+  const extensionsMagic = await reponseExtensionsMagic.json();
+  const extensionsYugioh = await reponseExtensionsYugioh.json();
+  const extensionsOnePiece = await reponseExtensionsOnePiece.json();
 
   const totalParExtension = {};
-  extensions.forEach(ext => {
+  [...extensionsMagic, ...extensionsYugioh, ...extensionsOnePiece].forEach(ext => {
     totalParExtension[ext.nom] = ext.total;
   });
 
